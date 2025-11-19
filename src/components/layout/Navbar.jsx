@@ -83,7 +83,8 @@ export default function Navbar() {
               )}
             </li>
             <li>
-              <NavLink to="/profile" className="profile-link">
+              {/* 🔥 Itt javítva: mindig paraméteres útvonalra mutat */}
+              <NavLink to={`/profile/${user.uid}`} className="profile-link">
                 {profile?.photoURL ? (
                   <img
                     src={profile.photoURL}

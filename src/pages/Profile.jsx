@@ -14,6 +14,7 @@ import { deleteObject, ref } from "firebase/storage";
 import { Link, useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import DeleteProfileButton from "../components/profile/DeleteProfileButton";
+import StartChatButton from "../components/chat/StartChatButton"; 
 import "../styles/profile.css";
 import "../styles/Cards.css";
 
@@ -23,7 +24,6 @@ export default function Profile() {
   const { uid: paramUid } = useParams();
   const { user } = useAuth();
 
-  // targetUid: akinek a profilját megnyitjuk (paramUid ha van, különben saját)
   const targetUid = paramUid || user?.uid;
 
   const [events, setEvents] = useState([]);
@@ -32,7 +32,6 @@ export default function Profile() {
   useEffect(() => {
     if (!targetUid) return;
 
-    // Események az adott profilhoz (nem csak saját!)
     const q = query(
       collection(db, "events"),
       where("createdByUid", "==", targetUid)
@@ -41,7 +40,6 @@ export default function Profile() {
       setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() })))
     );
 
-    // Profiladatok az adott uid-hez
     (async () => {
       const userRef = doc(db, "users", targetUid);
       const snap = await getDoc(userRef);
@@ -55,7 +53,7 @@ export default function Profile() {
   const isOwnProfile = user?.uid && targetUid === user.uid;
 
   const handleDeleteEvent = async (id, imagePath) => {
-    if (!isOwnProfile) return; // csak a saját profilodon törölhetsz
+    if (!isOwnProfile) return;
     if (!window.confirm("Biztos törlöd az eseményt?")) return;
     try {
       await deleteDoc(doc(db, "events", id));
@@ -89,7 +87,7 @@ export default function Profile() {
       <h2>{isOwnProfile ? "Profilom" : "Felhasználói profil"}</h2>
 
       <div className="profile-header">
-        {isOwnProfile && (
+        {isOwnProfile ? (
           <>
             <Link to="/profile/edit">
               <button>Profil szerkesztése</button>
@@ -101,6 +99,9 @@ export default function Profile() {
               <button>Barátkérelmek</button>
             </Link>
           </>
+        ) : (
+          // 🔥 új gomb csak más profilokon
+          <StartChatButton targetUid={targetUid} />
         )}
 
         {profileData?.photoURL && profileData.photoURL !== DEFAULT_AVATAR ? (
