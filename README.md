@@ -1,2 +1,0 @@
-# MotoWorld
-Rider's app
