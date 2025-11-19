@@ -47,23 +47,28 @@ export default function Comments({ parentId, parentType = "events", user }) {
     const parentSnap = await getDoc(parentRef);
     const parentData = parentSnap.exists() ? parentSnap.data() : {};
 
-    // 2) Komment felvitele
+    // 🔥 2) Lekérjük a user dokumentumot a users kollekcióból
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.exists() ? userSnap.data() : {};
+
+    // 3) Komment felvitele – mindig a Firestore user adatait használjuk
     await addDoc(collection(db, parentType, parentId, "comments"), {
-      text,
+      text: text.trim(),
       createdAt: serverTimestamp(),
-      createdBy: user.email,
       createdByUid: user.uid,
-      authorName: user.displayName || "Ismeretlen",
-      authorPhoto: user.photoURL || "/default-avatar.png",
+      createdBy: user.email,
+      authorName: userData.displayName || "Ismeretlen",
+      authorPhoto: userData.photoURL || "/default-avatar.png",
     });
 
-    // 3) Értesítés küldése, ha nem a saját posztod/eseményed alá írtál
+    // 4) Értesítés küldése, ha nem a saját posztod/eseményed alá írtál
     if (parentData.createdByUid && parentData.createdByUid !== user.uid) {
       await notifyUser({
-        type: "comment", // típusos értesítés
+        type: "comment",
         senderId: user.uid,
-        senderName: user.displayName || "Ismeretlen",
-        senderPhoto: user.photoURL || "/default-avatar.png",
+        senderName: userData.displayName || "Ismeretlen",
+        senderPhoto: userData.photoURL || "/default-avatar.png",
         receiverId: parentData.createdByUid,
         relatedId: parentId,
       });

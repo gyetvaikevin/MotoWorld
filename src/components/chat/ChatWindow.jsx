@@ -14,6 +14,7 @@ import { db } from "../../services/firebase";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Chat.css";
+import UserNameLink from "../profile/UserNameLink";
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 
@@ -163,7 +164,7 @@ export default function ChatWindow({ conversation }) {
           className="chat-header-avatar"
         />
         <h3 className="chat-header-name">
-          {partner?.displayName || "Ismeretlen"}
+          <UserNameLink uid={partner?.id} displayName={partner?.displayName} />
         </h3>
       </div>
 

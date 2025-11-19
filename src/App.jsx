@@ -81,7 +81,6 @@ export default function App() {
                     </PrivateRoute>
                   }
                 />
-                {/* Új: paraméteres chat route */}
                 <Route
                   path="/chat/:id"
                   element={
@@ -92,15 +91,6 @@ export default function App() {
                 />
 
                 {/* Profil és barátok */}
-                <Route
-                  path="/profile"
-                  element={
-                    <PrivateRoute>
-                      <Profile />
-                    </PrivateRoute>
-                  }
-                />
-                {/* Új: paraméteres profil route */}
                 <Route
                   path="/profile/:uid"
                   element={

@@ -1,5 +1,6 @@
 // src/components/comments/CommentItem.jsx
 import React from "react";
+import UserNameLink from "../profile/UserNameLink";
 
 export default function CommentItem({ comment, user, onDelete }) {
   return (
@@ -11,7 +12,7 @@ export default function CommentItem({ comment, user, onDelete }) {
       />
       <div className="comment-body">
         <div className="comment-header">
-          <span className="comment-author">{comment.authorName}</span>
+          <UserNameLink uid={comment.createdByUid} displayName={comment.authorName} />
           {user?.uid === comment.createdByUid && (
             <button className="comment-delete-btn" onClick={onDelete}>
               🗑

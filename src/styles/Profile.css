@@ -106,3 +106,13 @@
 .profile-event-actions button:hover {
   background: #e05500;
 }
+
+.profile-link {
+  color: orange;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+}
+.profile-link:hover {
+  text-decoration: underline;
+}

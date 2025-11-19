@@ -3,6 +3,7 @@ import { useState } from "react";
 import { db } from "../../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
+import UserNameLink from "../profile/UserNameLink";
 
 export default function ChatList({ conversations, onSelect }) {
   const { user } = useAuth();
@@ -46,9 +47,7 @@ export default function ChatList({ conversations, onSelect }) {
                 className="chat-avatar"
               />
               <div className="chat-list-info">
-                <strong className="chat-list-name">
-                  {partner?.displayName || "Ismeretlen"}
-                </strong>
+                <UserNameLink uid={partnerId} displayName={partner?.displayName} />
                 <p className="last-msg">
                   {conv.lastMessage || "Új beszélgetés"}
                 </p>

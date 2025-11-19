@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Comments from "../comments/Comments";
 import LikesModal from "./LikesModal";
+import UserNameLink from "../profile/UserNameLink"; 
 
 export default function EventCard({
   event,
@@ -21,7 +22,12 @@ export default function EventCard({
           alt={event.authorName}
           className="event-avatar"
         />
-        <span className="event-author">{event.authorName}</span>
+        <span className="event-author">
+          <UserNameLink
+            uid={event.createdByUid}
+            displayName={event.authorName}
+          />
+        </span>
       </div>
 
       <h3>{event.title}</h3>
@@ -52,7 +58,6 @@ export default function EventCard({
         )}
       </div>
 
-      {/* 🔥 Javítva: Comments most már parentId + parentType propokat kap */}
       <Comments parentId={event.id} parentType="events" user={user} />
 
       {showLikes && (
