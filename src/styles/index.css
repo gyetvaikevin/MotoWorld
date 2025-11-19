@@ -1,0 +1,63 @@
+:root {
+  --color-primary: #ff5c00;
+  --color-secondary: #ffffff;
+  --color-bg: #111111;
+  --color-text: #f5f5f5;
+  --color-muted: #aaaaaa;
+  --radius: 8px;
+  --transition: 0.2s ease-in-out;
+  --font-main: "Roboto", sans-serif;
+}
+
+/* ===== Reset ===== */
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* ===== Alap gombok ===== */
+button {
+  background: var(--color-primary);
+  color: var(--color-secondary);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.6rem 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+button:hover { background: #e05500; }
+
+/* ===== Alap form elemek ===== */
+input, textarea, select {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #333;
+  border-radius: var(--radius);
+  background: #1a1a1a;
+  color: var(--color-text);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(255, 92, 0, 0.4);
+}
+
+/* ===== Oldal wrapper ===== */
+.page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  width: 100%;
+}

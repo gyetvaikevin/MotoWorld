@@ -1,0 +1,109 @@
+/* Általános oldal konténerek */
+.friends-page,
+.friend-requests-page {
+  padding: 1rem;
+}
+
+.friends-page h2,
+.friend-requests-page h2 {
+  margin-bottom: 1rem;
+}
+
+/* Lista alap */
+.friends-list,
+.friend-requests-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* Listaelemek */
+.friend-item,
+.friend-request-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+/* Avatar */
+.friend-item img,
+.friend-request-item img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Név */
+.friend-item span,
+.friend-request-item span {
+  font-weight: 500;
+}
+
+/* Gombok */
+.friend-item button,
+.friend-request-item button,
+.friend-button {
+  margin-left: auto;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s ease;
+}
+
+.friend-item button:hover,
+.friend-request-item button:hover,
+.friend-button:hover {
+  background-color: #0056b3;
+}
+
+/* Speciális gombszínek */
+.friend-request-item button:last-child {
+  background-color: #dc3545;
+}
+.friend-request-item button:last-child:hover {
+  background-color: #a71d2a;
+}
+
+.friend-search-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.friend-search-form input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.friend-search-form button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.friend-search-form button:hover {
+  background-color: #0056b3;
+}
+
+.friend-search-results {
+  margin-bottom: 1.5rem;
+}
+
+.friends-page span {
+  color: #666;
+}

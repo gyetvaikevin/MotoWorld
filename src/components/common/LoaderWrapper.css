@@ -1,0 +1,29 @@
+.loader-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: #111;
+  border-radius: 8px;
+}
+
+.loader-image {
+  width: 220px;
+  height: auto;
+  animation: pulse 1.5s infinite;
+}
+
+.loader-text {
+  margin-top: 12px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  font-family: 'Roboto', sans-serif;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.9; }
+}
