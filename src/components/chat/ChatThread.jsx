@@ -5,6 +5,7 @@ import ChatInput from "./ChatInput";
 import useConversation from "../../hooks/chat/useConversation";
 import { db } from "../../services/firebase";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
+import "./Chat.css";
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 
@@ -13,6 +14,7 @@ export default function ChatThread({ conversation, onBack }) {
   const { messages, sendMessage } = useConversation(conversation);
   const [partner, setPartner] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null); // 🔥 új state a modalhoz
   const scrollRef = useRef(null);
 
   // saját user Firestore adatai
@@ -75,12 +77,54 @@ export default function ChatThread({ conversation, onBack }) {
               alt="avatar"
               className="chat-avatar"
             />
-            <div className="bubble">{m.text}</div>
+            {/* 🔥 típus szerinti megjelenítés */}
+            {(!m.type || m.type === "text") && (
+              <div className="bubble">{m.text}</div>
+            )}
+            {m.type === "image" && (
+              <img
+                src={m.mediaUrl}
+                alt="kép"
+                className="chat-media"
+                onClick={() =>
+                  setSelectedMedia({ url: m.mediaUrl, type: "image" })
+                }
+              />
+            )}
+            {m.type === "video" && (
+              <video
+                controls
+                className="chat-media"
+                onClick={() =>
+                  setSelectedMedia({ url: m.mediaUrl, type: "video" })
+                }
+              >
+                <source src={m.mediaUrl} type="video/mp4" />
+              </video>
+            )}
           </div>
         ))}
       </div>
 
       <ChatInput onSend={sendMessage} />
+
+      {/* 🔥 Modal nagyítás */}
+      {selectedMedia && (
+        <div
+          className="chat-modal-overlay"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <div className="chat-modal-content">
+            {selectedMedia.type === "image" ? (
+              <img src={selectedMedia.url} alt="Nagyított kép" />
+            ) : (
+              <video controls autoPlay>
+                <source src={selectedMedia.url} type="video/mp4" />
+              </video>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

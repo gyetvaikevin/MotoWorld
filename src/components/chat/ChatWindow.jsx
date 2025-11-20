@@ -10,7 +10,8 @@ import {
   getDoc,
   writeBatch,
 } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../services/firebase";
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Chat.css";
@@ -22,9 +23,9 @@ export default function ChatWindow({ conversation }) {
   const { user } = useAuth();
   const [convMeta, setConvMeta] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
   const [partner, setPartner] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
+  const [selectedMedia, setSelectedMedia] = useState(null); // 🔥 új state a modalhoz
   const scrollRef = useRef(null);
 
   // saját user Firestore adatai
@@ -95,14 +96,9 @@ export default function ChatWindow({ conversation }) {
     fetchPartner();
   }, [convMeta, user?.uid]);
 
-  // Messages snapshot + olvasatlanok olvasottra állítása
+  // Messages snapshot + olvasatlan üzenetek olvasottra állítása
   useEffect(() => {
-    if (
-      !user?.uid ||
-      !convMeta?.id ||
-      !convMeta.participants?.includes(user.uid)
-    )
-      return;
+    if (!user?.uid || !convMeta?.id || !convMeta.participants?.includes(user.uid)) return;
 
     const q = query(
       collection(db, "conversations", convMeta.id, "messages"),
@@ -135,20 +131,36 @@ export default function ChatWindow({ conversation }) {
     return () => unsub();
   }, [user?.uid, convMeta?.id, convMeta?.participants]);
 
-  const sendMessage = async () => {
-    if (!text.trim() || !user?.uid || !convMeta?.participants || !convMeta?.id)
-      return;
+  // 🔥 Üzenetküldés text / file típusra
+  const sendMessage = async (msg) => {
+    if (!user?.uid || !convMeta?.participants || !convMeta?.id) return;
     const receiverId = convMeta.participants.find((uid) => uid !== user.uid);
     if (!receiverId) return;
+
     try {
-      await addDoc(collection(db, "conversations", convMeta.id, "messages"), {
-        senderId: user.uid,
-        receiverId,
-        text: text.trim(),
-        createdAt: serverTimestamp(),
-        read: false, // 🔥 új üzenet mindig olvasatlan
-      });
-      setText("");
+      if (msg.type === "text") {
+        await addDoc(collection(db, "conversations", convMeta.id, "messages"), {
+          senderId: user.uid,
+          receiverId,
+          type: "text",
+          text: msg.text,
+          createdAt: serverTimestamp(),
+          read: false,
+        });
+      } else if (msg.type === "file") {
+        const fileRef = ref(storage, `chat/${convMeta.id}/${Date.now()}-${msg.file.name}`);
+        await uploadBytes(fileRef, msg.file);
+        const url = await getDownloadURL(fileRef);
+
+        await addDoc(collection(db, "conversations", convMeta.id, "messages"), {
+          senderId: user.uid,
+          receiverId,
+          type: msg.file.type.startsWith("video") ? "video" : "image",
+          mediaUrl: url,
+          createdAt: serverTimestamp(),
+          read: false,
+        });
+      }
     } catch (err) {
       console.error("❌ Üzenetküldési hiba:", err);
     }
@@ -173,9 +185,7 @@ export default function ChatWindow({ conversation }) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`chat-message ${
-              msg.senderId === user.uid ? "self" : "partner"
-            }`}
+            className={`chat-message ${msg.senderId === user.uid ? "self" : "partner"}`}
           >
             <img
               src={
@@ -186,20 +196,42 @@ export default function ChatWindow({ conversation }) {
               alt="avatar"
               className="chat-avatar"
             />
-            <div className="bubble">{msg.text}</div>
+            {(!msg.type || msg.type === "text") && <div className="bubble">{msg.text}</div>}
+            {msg.type === "image" && (
+              <img
+                src={msg.mediaUrl}
+                alt="kép"
+                className="chat-media"
+                onClick={() => setSelectedMedia({ url: msg.mediaUrl, type: "image" })}
+              />
+            )}
+            {msg.type === "video" && (
+              <video
+                controls
+                className="chat-media"
+                onClick={() => setSelectedMedia({ url: msg.mediaUrl, type: "video" })}
+              >
+                <source src={msg.mediaUrl} type="video/mp4" />
+              </video>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Input */}
-      <div className="chat-input">
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Írj üzenetet..."
-        />
-        <button onClick={sendMessage}>Küldés</button>
-      </div>
+      {/* 🔥 Modal nagyítás */}
+      {selectedMedia && (
+        <div className="chat-modal-overlay" onClick={() => setSelectedMedia(null)}>
+          <div className="chat-modal-content">
+            {selectedMedia.type === "image" ? (
+              <img src={selectedMedia.url} alt="Nagyított kép" />
+            ) : (
+              <video controls autoPlay>
+                <source src={selectedMedia.url} type="video/mp4" />
+              </video>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

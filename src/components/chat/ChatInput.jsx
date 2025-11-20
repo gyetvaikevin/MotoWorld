@@ -3,12 +3,17 @@ import { useState } from "react";
 
 export default function ChatInput({ onSend }) {
   const [text, setText] = useState("");
+  const [file, setFile] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
-    onSend(text);
-    setText("");
+    if (file) {
+      onSend({ type: "file", file });
+      setFile(null);
+    } else if (text.trim()) {
+      onSend({ type: "text", text: text.trim() });
+      setText("");
+    }
   };
 
   return (
@@ -18,6 +23,11 @@ export default function ChatInput({ onSend }) {
         placeholder="Írj üzenetet..."
         value={text}
         onChange={(e) => setText(e.target.value)}
+      />
+      <input
+        type="file"
+        accept="image/*,video/*"
+        onChange={(e) => setFile(e.target.files[0])}
       />
       <button type="submit">Küldés</button>
     </form>

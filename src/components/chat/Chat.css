@@ -303,3 +303,41 @@
 .chat-input button:hover {
   background: #e05500;
 }
+
+.chat-media {
+  max-width: 60%;      /* ne legyen szélesebb a chat ablaknál */
+  max-height: 300px;   /* korlátozott magasság */
+  border-radius: 8px;  /* lekerekített sarkok */
+  margin: 4px 0;       /* kis térköz */
+  object-fit: cover;   /* arányosan vágja, ha túl nagy */
+}
+
+.chat-message.self .chat-media {
+  align-self: flex-end;
+}
+
+.chat-message.partner .chat-media {
+  align-self: flex-start;
+}
+
+.chat-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.chat-modal-content img,
+.chat-modal-content video {
+  max-width: 95vw;
+  max-height: 95vh;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+

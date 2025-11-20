@@ -10,7 +10,8 @@ import {
   doc,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../../services/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../services/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function useConversation(conversation) {
@@ -34,30 +35,49 @@ export default function useConversation(conversation) {
     return () => unsub();
   }, [user, conversation]);
 
-  const sendMessage = async (text) => {
-    if (!text.trim() || !user?.uid || !conversation?.participants) return;
-
-    const receiverId = conversation.participants.find(
-      (uid) => uid !== user.uid
-    );
+  // 🔥 most már kezeljük a text és file típusokat
+  const sendMessage = async (msg) => {
+    if (!user?.uid || !conversation?.participants) return;
+    const receiverId = conversation.participants.find((uid) => uid !== user.uid);
     if (!receiverId) return;
 
-    // 🔥 új üzenet mindig olvasatlan
-    await addDoc(collection(db, "conversations", conversation.id, "messages"), {
-      senderId: user.uid,
-      receiverId,
-      text: text.trim(),
-      createdAt: serverTimestamp(),
-      read: false,
-    });
+    if (msg.type === "text") {
+      await addDoc(collection(db, "conversations", conversation.id, "messages"), {
+        senderId: user.uid,
+        receiverId,
+        type: "text",
+        text: msg.text.trim(),
+        createdAt: serverTimestamp(),
+        read: false,
+      });
 
-    // 🔥 Frissítjük a beszélgetés meta adatait
-    await updateDoc(doc(db, "conversations", conversation.id), {
-      updatedAt: serverTimestamp(),
-      lastMessage: text.trim(),
-    });
+      await updateDoc(doc(db, "conversations", conversation.id), {
+        updatedAt: serverTimestamp(),
+        lastMessage: msg.text.trim(),
+      });
+    }
 
-    // ❌ notifyUser törölve – nem kell normál értesítés chathez
+    if (msg.type === "file") {
+      const fileRef = ref(storage, `chat/${conversation.id}/${Date.now()}-${msg.file.name}`);
+      await uploadBytes(fileRef, msg.file);
+      const url = await getDownloadURL(fileRef);
+
+      const fileType = msg.file.type.startsWith("video") ? "video" : "image";
+
+      await addDoc(collection(db, "conversations", conversation.id, "messages"), {
+        senderId: user.uid,
+        receiverId,
+        type: fileType,
+        mediaUrl: url,
+        createdAt: serverTimestamp(),
+        read: false,
+      });
+
+      await updateDoc(doc(db, "conversations", conversation.id), {
+        updatedAt: serverTimestamp(),
+        lastMessage: fileType === "video" ? "🎥 Videó" : "📷 Kép",
+      });
+    }
   };
 
   return { messages, loading, sendMessage };
