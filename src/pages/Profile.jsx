@@ -95,9 +95,6 @@ export default function Profile() {
             <Link to="/friends">
               <button>Barátaim</button>
             </Link>
-            <Link to="/friend-requests">
-              <button>Barátkérelmek</button>
-            </Link>
           </>
         ) : (
           // 🔥 új gomb csak más profilokon

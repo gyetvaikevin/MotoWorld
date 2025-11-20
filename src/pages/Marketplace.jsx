@@ -4,20 +4,20 @@ import { db } from "../services/firebase";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import LoaderWrapper from "../components/common/LoaderWrapper";
+import UserNameLink from "../components/profile/UserNameLink"; // 🔥 új import
 import "../styles/Cards.css";
-
 
 export default function Marketplace() {
   const [listings, setListings] = useState([]);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const [loading, setLoading] = useState(true); // ÚJ állapot
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const q = query(collection(db, "marketplace"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
       setListings(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      setLoading(false); // ha megjött az adat, kikapcsoljuk a loadingot
+      setLoading(false);
     });
     return () => unsub();
   }, []);
@@ -54,15 +54,15 @@ export default function Marketplace() {
       ) : (
         <div className="listing-grid">
           {filtered.map((l) => (
-            <Link
-              key={l.id}
-              to={`/marketplace/${l.id}`}
-              className="card listing-card"
-            >
-              {l.imageUrl && <img src={l.imageUrl} alt={l.title} />}
-              <h3>{l.title}</h3>
-              <p>{l.price} Ft</p>
-            </Link>
+            <div key={l.id} className="card listing-card">
+              <Link to={`/marketplace/${l.id}`}>
+                {l.imageUrl && <img src={l.imageUrl} alt={l.title} />}
+                <h3>{l.title}</h3>
+                <p>{l.price} Ft</p>
+              </Link>
+              {/* 🔥 Hirdető neve kattintható */}
+              <UserNameLink uid={l.createdByUid} displayName={l.authorName} />
+            </div>
           ))}
         </div>
       )}

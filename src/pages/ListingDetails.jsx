@@ -5,6 +5,7 @@ import { db, storage, auth } from "../services/firebase";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import LoaderWrapper from "../components/common/LoaderWrapper";
+import UserNameLink from "../components/profile/UserNameLink"; // 🔥 új import
 
 export default function ListingDetails() {
   const { id } = useParams();
@@ -59,6 +60,12 @@ export default function ListingDetails() {
           style={{ maxWidth: "400px", borderRadius: "6px", marginBottom: "1rem" }}
         />
       )}
+
+      {/* 🔥 Hirdető neve kattintható */}
+      <p>
+        <strong>Hirdető:</strong>{" "}
+        <UserNameLink uid={listing.createdByUid} displayName={listing.authorName} />
+      </p>
 
       {/* Saját hirdetés esetén szerkesztés/törlés */}
       {user?.uid === listing.createdByUid && (
