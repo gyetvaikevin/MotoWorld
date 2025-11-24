@@ -16,8 +16,11 @@ import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Chat.css";
 import UserNameLink from "../profile/UserNameLink";
+import EditGroupModal from "./EditGroupModal";
+import AddMemberModal from "./AddMemberModal";
 
 const DEFAULT_AVATAR = "/default-avatar.png";
+const DEFAULT_GROUP_AVATAR = "/default-group.png";
 
 export default function ChatWindow({ conversation }) {
   const { user } = useAuth();
@@ -25,7 +28,9 @@ export default function ChatWindow({ conversation }) {
   const [messages, setMessages] = useState([]);
   const [partner, setPartner] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
-  const [selectedMedia, setSelectedMedia] = useState(null); // 🔥 új state a modalhoz
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
   const scrollRef = useRef(null);
 
   // saját user Firestore adatai
@@ -41,8 +46,8 @@ export default function ChatWindow({ conversation }) {
     const loadConv = async () => {
       if (!conversation?.id || !user?.uid) return;
       try {
-        const ref = doc(db, "conversations", conversation.id);
-        const snap = await getDoc(ref);
+        const refConv = doc(db, "conversations", conversation.id);
+        const snap = await getDoc(refConv);
         if (!snap.exists()) {
           setConvMeta(null);
           return;
@@ -57,6 +62,10 @@ export default function ChatWindow({ conversation }) {
           id: conversation.id,
           participants: parts,
           createdAt: data.createdAt,
+          isGroup: data.isGroup || false,
+          name: data.name || (data.isGroup ? "Névtelen csoport" : null),
+          photoURL:
+            data.photoURL || (data.isGroup ? DEFAULT_GROUP_AVATAR : null),
         });
       } catch (err) {
         console.error("❌ Conversation betöltési hiba:", err);
@@ -66,15 +75,15 @@ export default function ChatWindow({ conversation }) {
     loadConv();
   }, [conversation?.id, user?.uid]);
 
-  // Partner adatainak lekérése
+  // Partner adatainak lekérése privát chatnél
   useEffect(() => {
     const fetchPartner = async () => {
-      if (!convMeta?.participants || !user?.uid) return;
+      if (!convMeta?.participants || !user?.uid || convMeta?.isGroup) return;
       const partnerId = convMeta.participants.find((uid) => uid !== user.uid);
       if (!partnerId) return;
       try {
-        const ref = doc(db, "users", partnerId);
-        const snap = await getDoc(ref);
+        const refUser = doc(db, "users", partnerId);
+        const snap = await getDoc(refUser);
         if (snap.exists()) {
           const d = snap.data();
           setPartner({
@@ -98,7 +107,12 @@ export default function ChatWindow({ conversation }) {
 
   // Messages snapshot + olvasatlan üzenetek olvasottra állítása
   useEffect(() => {
-    if (!user?.uid || !convMeta?.id || !convMeta.participants?.includes(user.uid)) return;
+    if (
+      !user?.uid ||
+      !convMeta?.id ||
+      !convMeta.participants?.includes(user.uid)
+    )
+      return;
 
     const q = query(
       collection(db, "conversations", convMeta.id, "messages"),
@@ -109,7 +123,6 @@ export default function ChatWindow({ conversation }) {
       const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setMessages(list);
 
-      // Olvasatlan üzenetek olvasottra állítása
       if (list.length > 0) {
         const batch = writeBatch(db);
         snap.docs.forEach((docSnap) => {
@@ -134,27 +147,26 @@ export default function ChatWindow({ conversation }) {
   // 🔥 Üzenetküldés text / file típusra
   const sendMessage = async (msg) => {
     if (!user?.uid || !convMeta?.participants || !convMeta?.id) return;
-    const receiverId = convMeta.participants.find((uid) => uid !== user.uid);
-    if (!receiverId) return;
 
     try {
       if (msg.type === "text") {
         await addDoc(collection(db, "conversations", convMeta.id, "messages"), {
           senderId: user.uid,
-          receiverId,
           type: "text",
           text: msg.text,
           createdAt: serverTimestamp(),
           read: false,
         });
       } else if (msg.type === "file") {
-        const fileRef = ref(storage, `chat/${convMeta.id}/${Date.now()}-${msg.file.name}`);
+        const fileRef = ref(
+          storage,
+          `chat/${convMeta.id}/${Date.now()}-${msg.file.name}`
+        );
         await uploadBytes(fileRef, msg.file);
         const url = await getDownloadURL(fileRef);
 
         await addDoc(collection(db, "conversations", convMeta.id, "messages"), {
           senderId: user.uid,
-          receiverId,
           type: msg.file.type.startsWith("video") ? "video" : "image",
           mediaUrl: url,
           createdAt: serverTimestamp(),
@@ -170,14 +182,46 @@ export default function ChatWindow({ conversation }) {
     <div className="chat-window">
       {/* Fejléc */}
       <div className="chat-header">
-        <img
-          src={partner?.photoURL || DEFAULT_AVATAR}
-          alt={partner?.displayName || "Partner"}
-          className="chat-header-avatar"
-        />
-        <h3 className="chat-header-name">
-          <UserNameLink uid={partner?.id} displayName={partner?.displayName} />
-        </h3>
+        {convMeta?.isGroup ? (
+          <>
+            <img
+              src={convMeta.photoURL || DEFAULT_GROUP_AVATAR}
+              alt={convMeta.name || "Csoport"}
+              className="chat-header-avatar"
+            />
+            <h3 className="chat-header-name">
+              {convMeta.name || "Névtelen csoport"}
+              <button
+                className="edit-group-btn"
+                onClick={() => setShowEditGroup(true)}
+              >
+                ✎
+              </button>
+            </h3>
+          </>
+        ) : (
+          <>
+            <img
+              src={partner?.photoURL || DEFAULT_AVATAR}
+              alt={partner?.displayName || "Partner"}
+              className="chat-header-avatar"
+            />
+            <h3 className="chat-header-name">
+              <UserNameLink
+                uid={partner?.id}
+                displayName={partner?.displayName}
+              />
+            </h3>
+          </>
+        )}
+
+        {/* 🔥 Plusz gomb mindig látszik */}
+        <button
+          className="add-member-btn"
+          onClick={() => setShowAddMember(true)}
+        >
+          +
+        </button>
       </div>
 
       {/* Üzenetek */}
@@ -185,31 +229,41 @@ export default function ChatWindow({ conversation }) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`chat-message ${msg.senderId === user.uid ? "self" : "partner"}`}
+            className={`chat-message ${
+              msg.senderId === user.uid ? "self" : "partner"
+            }`}
           >
             <img
               src={
                 msg.senderId === user.uid
                   ? currentUserData?.photoURL || DEFAULT_AVATAR
+                  : convMeta?.isGroup
+                  ? msg.senderPhotoURL || DEFAULT_AVATAR
                   : partner?.photoURL || DEFAULT_AVATAR
               }
               alt="avatar"
               className="chat-avatar"
             />
-            {(!msg.type || msg.type === "text") && <div className="bubble">{msg.text}</div>}
+            {(!msg.type || msg.type === "text") && (
+              <div className="bubble">{msg.text}</div>
+            )}
             {msg.type === "image" && (
               <img
                 src={msg.mediaUrl}
                 alt="kép"
                 className="chat-media"
-                onClick={() => setSelectedMedia({ url: msg.mediaUrl, type: "image" })}
+                onClick={() =>
+                  setSelectedMedia({ url: msg.mediaUrl, type: "image" })
+                }
               />
             )}
             {msg.type === "video" && (
               <video
                 controls
                 className="chat-media"
-                onClick={() => setSelectedMedia({ url: msg.mediaUrl, type: "video" })}
+                onClick={() =>
+                  setSelectedMedia({ url: msg.mediaUrl, type: "video" })
+                }
               >
                 <source src={msg.mediaUrl} type="video/mp4" />
               </video>
@@ -220,7 +274,10 @@ export default function ChatWindow({ conversation }) {
 
       {/* 🔥 Modal nagyítás */}
       {selectedMedia && (
-        <div className="chat-modal-overlay" onClick={() => setSelectedMedia(null)}>
+        <div
+          className="chat-modal-overlay"
+          onClick={() => setSelectedMedia(null)}
+        >
           <div className="chat-modal-content">
             {selectedMedia.type === "image" ? (
               <img src={selectedMedia.url} alt="Nagyított kép" />
@@ -231,6 +288,41 @@ export default function ChatWindow({ conversation }) {
             )}
           </div>
         </div>
+      )}
+
+      {/* 🔥 Csoport szerkesztés modal */}
+      {showEditGroup && (
+        <EditGroupModal
+          convId={convMeta.id}
+          currentName={convMeta.name}
+          currentPhoto={convMeta.photoURL}
+          onClose={(updated) => {
+            setShowEditGroup(false);
+            if (updated) {
+              // 🔥 lokálisan frissítjük a convMeta state-et
+              setConvMeta((prev) => ({
+                ...prev,
+                name: updated.name,
+                photoURL: updated.photoURL,
+                isGroup: true, // biztosan csoportként kezeljük
+              }));
+            }
+          }}
+        />
+      )}
+
+      {/* 🔥 Új tag hozzáadás modal */}
+      {showAddMember && (
+        <AddMemberModal
+          convId={convMeta.id}
+          onClose={(result) => {
+            setShowAddMember(false);
+            if (result?.newConvId) {
+              // 🔥 a szülőnek kell jelezni, hogy új beszélgetést nyisson
+              onNavigateToConversation(result.newConvId);
+            }
+          }}
+        />
       )}
     </div>
   );

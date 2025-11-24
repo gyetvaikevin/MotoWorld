@@ -341,3 +341,11 @@
   box-shadow: 0 0 20px rgba(0,0,0,0.6);
 }
 
+.edit-group-btn {
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+

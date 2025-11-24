@@ -112,49 +112,51 @@ service cloud.firestore {
         && request.auth.uid == resource.data.createdByUid;
     }
 
-/* -------------------- CHAT / CONVERSATIONS -------------------- */
-match /conversations/{convId} {
-  allow read: if request.auth != null
-    && request.auth.uid in resource.data.participants;
+    /* -------------------- CHAT / CONVERSATIONS -------------------- */
+    match /conversations/{convId} {
+      // Olvasás: csak résztvevők láthatják
+      allow read: if request.auth != null
+        && request.auth.uid in resource.data.participants;
 
-  allow create: if request.auth != null
-    && request.resource.data.participants is list
-    && request.auth.uid in request.resource.data.participants;
+      // Létrehozás: csak akkor, ha a saját uid benne van a participants-ben
+      allow create: if request.auth != null
+        && request.resource.data.participants is list
+        && request.auth.uid in request.resource.data.participants;
 
-  allow update: if request.auth != null
-    && request.auth.uid in resource.data.participants;
+      // Módosítás / törlés: csak résztvevők
+      allow update, delete: if request.auth != null
+        && request.auth.uid in resource.data.participants;
 
-  allow delete: if request.auth != null
-    && request.auth.uid in resource.data.participants;
+      // Üzenetek alkollekció
+      match /messages/{msgId} {
+        function convParticipants() {
+          return get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        }
 
-  match /messages/{msgId} {
-    function convParticipants() {
-      return get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        // Olvasás: csak résztvevők
+        allow read: if request.auth != null
+          && request.auth.uid in convParticipants();
+
+        // Létrehozás: a küldőnek benne kell lennie a participants-ben
+        // 🔥 receiverId NEM kötelező többé
+        allow create: if request.auth != null
+          && request.auth.uid == request.resource.data.senderId
+          && request.resource.data.senderId in convParticipants()
+          && request.resource.data.type in ["text", "image", "video"]
+          && (
+            (request.resource.data.type == "text" && request.resource.data.text is string) ||
+            ((request.resource.data.type == "image" || request.resource.data.type == "video") && request.resource.data.mediaUrl is string)
+          );
+
+        // Update: csak a címzett állíthatja read:true-ra
+        allow update: if request.auth != null
+          && request.auth.uid in convParticipants()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(["read"]);
+
+        // Törlés: csak a küldő törölhet
+        allow delete: if request.auth != null
+          && request.auth.uid == resource.data.senderId;
+      }
     }
-
-    allow read: if request.auth != null
-      && request.auth.uid in convParticipants();
-
-    // 🔥 Bővítve: text vagy media üzenet engedélyezése
-    allow create: if request.auth != null
-      && request.auth.uid == request.resource.data.senderId
-      && request.resource.data.senderId in convParticipants()
-      && request.resource.data.receiverId in convParticipants()
-      && request.resource.data.type in ["text", "image", "video"]
-      && (
-        (request.resource.data.type == "text" && request.resource.data.text is string) ||
-        ((request.resource.data.type == "image" || request.resource.data.type == "video") && request.resource.data.mediaUrl is string)
-      );
-
-    allow update: if request.auth != null
-      && request.auth.uid in convParticipants()
-      && request.auth.uid == resource.data.receiverId
-      && request.resource.data.diff(resource.data).changedKeys().hasOnly(["read"]);
-
-    allow delete: if request.auth != null
-      && request.auth.uid == resource.data.senderId;
-  }
-}
-
   }
 }

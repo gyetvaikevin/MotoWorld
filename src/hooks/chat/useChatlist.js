@@ -18,10 +18,11 @@ export default function useChatList() {
   useEffect(() => {
     if (!user?.uid) return;
 
+    // 🔥 updatedAt helyett createdAt alapján rendezünk, mert az mindig van
     const q = query(
       collection(db, "conversations"),
       where("participants", "array-contains", user.uid),
-      orderBy("updatedAt", "desc")
+      orderBy("createdAt", "desc")
     );
 
     const unsub = onSnapshot(q, (snap) => {
@@ -29,7 +30,8 @@ export default function useChatList() {
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter(
           (conv) =>
-            Array.isArray(conv.participants) && conv.participants.includes(user.uid)
+            Array.isArray(conv.participants) &&
+            conv.participants.includes(user.uid)
         );
 
       setConversations(list);

@@ -1,4 +1,3 @@
-// src/components/chat/ChatSidebar.jsx
 import { useState, useEffect } from "react";
 import { auth, db } from "../../services/firebase";
 import ChatThread from "./ChatThread";
@@ -18,7 +17,6 @@ export default function ChatSidebar() {
   const { results, searchUsers } = useUserSearch();
   const user = auth.currentUser;
 
-  // Olvasatlan üzenetek számláló + lastMessage időbélyeg
   useEffect(() => {
     if (!user?.uid || conversations.length === 0) {
       setUnreadChats(0);
@@ -27,7 +25,6 @@ export default function ChatSidebar() {
 
     const counts = {};
     const unsubs = conversations.map((conv) => {
-      // Olvasatlanok számlálása
       const unreadQ = query(
         collection(db, "conversations", conv.id, "messages"),
         where("receiverId", "==", user.uid),
@@ -35,12 +32,11 @@ export default function ChatSidebar() {
       );
       const unsubUnread = onSnapshot(unreadQ, (snap) => {
         counts[conv.id] = snap.size;
-        conv.unreadCount = snap.size; // 🔥 csak akkor jelenik meg, ha > 0
+        conv.unreadCount = snap.size;
         const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
         setUnreadChats(total);
       });
 
-      // Legutolsó üzenet időbélyegének lekérése
       const lastMsgQ = query(
         collection(db, "conversations", conv.id, "messages"),
         orderBy("createdAt", "desc"),
@@ -132,7 +128,7 @@ export default function ChatSidebar() {
                   conversations={[...conversations].sort((a, b) => {
                     const aTime = a.lastMessageCreatedAt?.toMillis?.() || 0;
                     const bTime = b.lastMessageCreatedAt?.toMillis?.() || 0;
-                    return bTime - aTime; // 🔥 legfrissebb felül
+                    return bTime - aTime;
                   })}
                   onSelect={setActiveConv}
                 />
@@ -142,6 +138,9 @@ export default function ChatSidebar() {
             <ChatThread
               conversation={activeConv}
               onBack={() => setActiveConv(null)}
+              onNavigateToConversation={(newConvId) => {
+                setActiveConv({ id: newConvId });
+              }}
             />
           )}
         </div>

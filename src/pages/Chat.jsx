@@ -1,4 +1,3 @@
-// src/pages/Chat.jsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -10,20 +9,17 @@ import { startConversation } from "../hooks/chat/chatUtils";
 
 export default function ChatPage() {
   const { user } = useAuth();
-  const { id: targetUid } = useParams(); // 🔥 paraméter az URL-ből
+  const { id: targetUid } = useParams();
   const [activeConv, setActiveConv] = useState(null);
   const { conversations } = useChatList();
 
-  // ha van paraméter (pl. /chat/:uid), automatikusan nyissuk meg a beszélgetést
   useEffect(() => {
     const openConversation = async () => {
       if (targetUid && user) {
-        // keresd meg, van-e már beszélgetés ezzel a userrel
         let conv = conversations.find((c) =>
           c.participants.includes(targetUid)
         );
 
-        // ha nincs, indíts új beszélgetést
         if (!conv) {
           const convId = await startConversation(user.uid, targetUid);
           conv = { id: convId, participants: [user.uid, targetUid] };
@@ -41,7 +37,6 @@ export default function ChatPage() {
 
   return (
     <div style={{ display: "flex", gap: "1rem", height: "80vh" }}>
-      {/* Bal oldali panel: beszélgetések + új chat indítása */}
       <div
         style={{
           width: "30%",
@@ -53,10 +48,14 @@ export default function ChatPage() {
         <ChatList conversations={conversations} onSelect={setActiveConv} />
       </div>
 
-      {/* Jobb oldali panel: aktív beszélgetés */}
       <div style={{ flex: 1, padding: "0.5rem" }}>
         {activeConv ? (
-          <ChatWindow conversation={activeConv} />
+          <ChatWindow
+            conversation={activeConv}
+            onNavigateToConversation={(newConvId) => {
+              setActiveConv({ id: newConvId });
+            }}
+          />
         ) : (
           <p>Válassz egy beszélgetést, vagy indíts újat.</p>
         )}

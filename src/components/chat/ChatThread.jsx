@@ -1,4 +1,3 @@
-// src/components/chat/ChatThread.jsx
 import { useRef, useEffect, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import ChatInput from "./ChatInput";
@@ -6,18 +5,23 @@ import useConversation from "../../hooks/chat/useConversation";
 import { db } from "../../services/firebase";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import "./Chat.css";
+import AddMemberModal from "./AddMemberModal";
+import EditGroupModal from "./EditGroupModal";
 
 const DEFAULT_AVATAR = "/default-avatar.png";
+const DEFAULT_GROUP_AVATAR = "/default-group.png";
 
-export default function ChatThread({ conversation, onBack }) {
+export default function ChatThread({ conversation, onBack, onNavigateToConversation }) {
   const { user } = useAuth();
   const { messages, sendMessage } = useConversation(conversation);
   const [partner, setPartner] = useState(null);
   const [currentUserData, setCurrentUserData] = useState(null);
-  const [selectedMedia, setSelectedMedia] = useState(null); // 🔥 új state a modalhoz
+  const [selectedMedia, setSelectedMedia] = useState(null);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [showEditGroup, setShowEditGroup] = useState(false);
+  const [convMeta, setConvMeta] = useState(conversation);
   const scrollRef = useRef(null);
 
-  // saját user Firestore adatai
   useEffect(() => {
     if (!user?.uid) return;
     getDoc(doc(db, "users", user.uid)).then((snap) => {
@@ -25,40 +29,77 @@ export default function ChatThread({ conversation, onBack }) {
     });
   }, [user]);
 
-  // partner adatok
   useEffect(() => {
     const loadPartner = async () => {
-      if (!conversation?.participants || !user?.uid) return;
-      const partnerId = conversation.participants.find((id) => id !== user.uid);
+      if (!convMeta?.participants || !user?.uid || convMeta?.isGroup) return;
+      const partnerId = convMeta.participants.find((id) => id !== user.uid);
       if (!partnerId) return;
       const snap = await getDoc(doc(db, "users", partnerId));
       if (snap.exists()) setPartner(snap.data());
     };
     loadPartner();
-  }, [conversation, user]);
+  }, [convMeta, user]);
 
-  // scroll + olvasatlan üzenetek olvasottra állítása
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-    if (messages.length > 0 && user?.uid && conversation?.id) {
+    if (messages.length > 0 && user?.uid && convMeta?.id) {
       const batch = writeBatch(db);
       messages.forEach((m) => {
         if (m.receiverId === user.uid && m.read === false) {
           batch.update(
-            doc(db, "conversations", conversation.id, "messages", m.id),
+            doc(db, "conversations", convMeta.id, "messages", m.id),
             { read: true }
           );
         }
       });
       batch.commit();
     }
-  }, [messages, user, conversation?.id]);
+  }, [messages, user, convMeta?.id]);
 
   return (
     <div className="chat-thread">
       <button onClick={onBack}>← Vissza</button>
+
+      <div className="chat-header">
+        {convMeta.isGroup ? (
+          <>
+            <img
+              src={convMeta.photoURL || DEFAULT_GROUP_AVATAR}
+              alt={convMeta.name || "Csoport"}
+              className="chat-header-avatar"
+            />
+            <h3 className="chat-header-name">
+              {convMeta.name || "Névtelen csoport"}
+              <button
+                className="edit-group-btn"
+                onClick={() => setShowEditGroup(true)}
+              >
+                ✎
+              </button>
+            </h3>
+          </>
+        ) : (
+          <>
+            <img
+              src={partner?.photoURL || DEFAULT_AVATAR}
+              alt={partner?.displayName || "Partner"}
+              className="chat-header-avatar"
+            />
+            <h3 className="chat-header-name">
+              {partner?.displayName || "Ismeretlen"}
+            </h3>
+          </>
+        )}
+
+        <button
+          className="add-member-btn"
+          onClick={() => setShowAddMember(true)}
+        >
+          +
+        </button>
+      </div>
 
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((m) => (
@@ -72,12 +113,13 @@ export default function ChatThread({ conversation, onBack }) {
               src={
                 m.senderId === user.uid
                   ? currentUserData?.photoURL || DEFAULT_AVATAR
+                  : convMeta.isGroup
+                  ? m.senderPhotoURL || DEFAULT_AVATAR
                   : partner?.photoURL || DEFAULT_AVATAR
               }
               alt="avatar"
               className="chat-avatar"
             />
-            {/* 🔥 típus szerinti megjelenítés */}
             {(!m.type || m.type === "text") && (
               <div className="bubble">{m.text}</div>
             )}
@@ -108,7 +150,6 @@ export default function ChatThread({ conversation, onBack }) {
 
       <ChatInput onSend={sendMessage} />
 
-      {/* 🔥 Modal nagyítás */}
       {selectedMedia && (
         <div
           className="chat-modal-overlay"
@@ -124,6 +165,37 @@ export default function ChatThread({ conversation, onBack }) {
             )}
           </div>
         </div>
+      )}
+
+      {showAddMember && (
+        <AddMemberModal
+          convId={convMeta.id}
+          onClose={(result) => {
+            setShowAddMember(false);
+            if (result?.newConvId) {
+              onNavigateToConversation(result.newConvId);
+            }
+          }}
+        />
+      )}
+
+      {showEditGroup && (
+        <EditGroupModal
+          convId={convMeta.id}
+          currentName={convMeta.name}
+          currentPhoto={convMeta.photoURL}
+          onClose={(updated) => {
+            setShowEditGroup(false);
+            if (updated) {
+              setConvMeta((prev) => ({
+                ...prev,
+                name: updated.name,
+                photoURL: updated.photoURL,
+                isGroup: true,
+              }));
+            }
+          }}
+        />
       )}
     </div>
   );

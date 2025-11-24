@@ -46,11 +46,14 @@ export default function NewChat({ onSelect }) {
   const handleStart = async (partner) => {
     if (!user?.uid || !partner?.id) return;
     try {
-      const convId = await startConversation(user.uid, partner.id);
-      onSelect({ id: convId, participants: [user.uid, partner.id] });
+      const convId = await startConversation(user.uid, partner.id, {
+        participants: [user.uid, partner.id],
+        isGroup: false,
+      });
+
+      onSelect({ id: convId, participants: [user.uid, partner.id], isGroup: false });
       setSearch("");
       setResults([]);
-      // ❌ Chat értesítés törölve innen – nem kell notifyUser
     } catch (err) {
       console.error("❌ Beszélgetés indítási hiba:", err);
     }
