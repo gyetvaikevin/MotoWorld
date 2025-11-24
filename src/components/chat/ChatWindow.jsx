@@ -1,4 +1,3 @@
-// src/components/chat/ChatWindow.jsx
 import {
   collection,
   addDoc,
@@ -9,6 +8,7 @@ import {
   doc,
   getDoc,
   writeBatch,
+  arrayUnion,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../services/firebase";
@@ -18,6 +18,7 @@ import "./Chat.css";
 import UserNameLink from "../profile/UserNameLink";
 import EditGroupModal from "./EditGroupModal";
 import AddMemberModal from "./AddMemberModal";
+import GroupMembersModal from "./GroupMembersModal"; // 🔧 új komponens import
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 const DEFAULT_GROUP_AVATAR = "/default-group.png";
@@ -31,9 +32,10 @@ export default function ChatWindow({ conversation }) {
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showEditGroup, setShowEditGroup] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showMembers, setShowMembers] = useState(false); // 🔧 új state
   const scrollRef = useRef(null);
 
-  // saját user Firestore adatai
+  // Saját user Firestore adatai
   useEffect(() => {
     if (!user?.uid) return;
     getDoc(doc(db, "users", user.uid)).then((snap) => {
@@ -127,8 +129,8 @@ export default function ChatWindow({ conversation }) {
         const batch = writeBatch(db);
         snap.docs.forEach((docSnap) => {
           const data = docSnap.data();
-          if (data.receiverId === user.uid && data.read === false) {
-            batch.update(docSnap.ref, { read: true });
+          if (!data.readBy || !data.readBy.includes(user.uid)) {
+            batch.update(docSnap.ref, { readBy: arrayUnion(user.uid) });
           }
         });
         batch.commit();
@@ -144,7 +146,7 @@ export default function ChatWindow({ conversation }) {
     return () => unsub();
   }, [user?.uid, convMeta?.id, convMeta?.participants]);
 
-  // 🔥 Üzenetküldés text / file típusra
+  // 🔧 Üzenetküldés text / file típusra
   const sendMessage = async (msg) => {
     if (!user?.uid || !convMeta?.participants || !convMeta?.id) return;
 
@@ -155,7 +157,7 @@ export default function ChatWindow({ conversation }) {
           type: "text",
           text: msg.text,
           createdAt: serverTimestamp(),
-          read: false,
+          readBy: [user.uid], // 🔧 a küldő automatikusan olvasottnak számít
         });
       } else if (msg.type === "file") {
         const fileRef = ref(
@@ -170,7 +172,7 @@ export default function ChatWindow({ conversation }) {
           type: msg.file.type.startsWith("video") ? "video" : "image",
           mediaUrl: url,
           createdAt: serverTimestamp(),
-          read: false,
+          readBy: [user.uid],
         });
       }
     } catch (err) {
@@ -197,6 +199,12 @@ export default function ChatWindow({ conversation }) {
               >
                 ✎
               </button>
+              <button
+                className="members-btn"
+                onClick={() => setShowMembers(true)}
+              >
+                👥
+              </button>
             </h3>
           </>
         ) : (
@@ -215,7 +223,7 @@ export default function ChatWindow({ conversation }) {
           </>
         )}
 
-        {/* 🔥 Plusz gomb mindig látszik */}
+        {/* 🔧 Plusz gomb mindig látszik */}
         <button
           className="add-member-btn"
           onClick={() => setShowAddMember(true)}
@@ -223,7 +231,6 @@ export default function ChatWindow({ conversation }) {
           +
         </button>
       </div>
-
       {/* Üzenetek */}
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((msg) => (
@@ -272,7 +279,10 @@ export default function ChatWindow({ conversation }) {
         ))}
       </div>
 
-      {/* 🔥 Modal nagyítás */}
+      {/* Üzenetküldő komponens */}
+      <ChatInput onSend={sendMessage} />
+
+      {/* Média nagyítás */}
       {selectedMedia && (
         <div
           className="chat-modal-overlay"
@@ -290,7 +300,23 @@ export default function ChatWindow({ conversation }) {
         </div>
       )}
 
-      {/* 🔥 Csoport szerkesztés modal */}
+      {/* Tag hozzáadás */}
+      {showAddMember && (
+        <AddMemberModal
+          convId={convMeta.id}
+          onClose={(result) => {
+            setShowAddMember(false);
+            if (result?.newConvId) {
+              setConvMeta((prev) => ({
+                ...prev,
+                id: result.newConvId,
+              }));
+            }
+          }}
+        />
+      )}
+
+      {/* Csoport szerkesztés */}
       {showEditGroup && (
         <EditGroupModal
           convId={convMeta.id}
@@ -299,27 +325,12 @@ export default function ChatWindow({ conversation }) {
           onClose={(updated) => {
             setShowEditGroup(false);
             if (updated) {
-              // 🔥 lokálisan frissítjük a convMeta state-et
               setConvMeta((prev) => ({
                 ...prev,
                 name: updated.name,
                 photoURL: updated.photoURL,
-                isGroup: true, // biztosan csoportként kezeljük
+                isGroup: true,
               }));
-            }
-          }}
-        />
-      )}
-
-      {/* 🔥 Új tag hozzáadás modal */}
-      {showAddMember && (
-        <AddMemberModal
-          convId={convMeta.id}
-          onClose={(result) => {
-            setShowAddMember(false);
-            if (result?.newConvId) {
-              // 🔥 a szülőnek kell jelezni, hogy új beszélgetést nyisson
-              onNavigateToConversation(result.newConvId);
             }
           }}
         />

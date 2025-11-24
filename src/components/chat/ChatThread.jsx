@@ -7,6 +7,7 @@ import { doc, getDoc, writeBatch } from "firebase/firestore";
 import "./Chat.css";
 import AddMemberModal from "./AddMemberModal";
 import EditGroupModal from "./EditGroupModal";
+import GroupMembersModal from "./GroupMembersModal"; // 🔧 új komponens import
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 const DEFAULT_GROUP_AVATAR = "/default-group.png";
@@ -19,6 +20,7 @@ export default function ChatThread({ conversation, onBack, onNavigateToConversat
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showEditGroup, setShowEditGroup] = useState(false);
+  const [showMembers, setShowMembers] = useState(false); // 🔧 új state
   const [convMeta, setConvMeta] = useState(conversation);
   const scrollRef = useRef(null);
 
@@ -47,10 +49,10 @@ export default function ChatThread({ conversation, onBack, onNavigateToConversat
     if (messages.length > 0 && user?.uid && convMeta?.id) {
       const batch = writeBatch(db);
       messages.forEach((m) => {
-        if (m.receiverId === user.uid && m.read === false) {
+        if (!m.readBy || !m.readBy.includes(user.uid)) {
           batch.update(
             doc(db, "conversations", convMeta.id, "messages", m.id),
-            { read: true }
+            { readBy: [...(m.readBy || []), user.uid] }
           );
         }
       });
@@ -77,6 +79,12 @@ export default function ChatThread({ conversation, onBack, onNavigateToConversat
                 onClick={() => setShowEditGroup(true)}
               >
                 ✎
+              </button>
+              <button
+                className="members-btn"
+                onClick={() => setShowMembers(true)}
+              >
+                👥
               </button>
             </h3>
           </>
@@ -195,6 +203,13 @@ export default function ChatThread({ conversation, onBack, onNavigateToConversat
               }));
             }
           }}
+        />
+      )}
+
+      {showMembers && (
+        <GroupMembersModal
+          participants={convMeta.participants}
+          onClose={() => setShowMembers(false)}
         />
       )}
     </div>

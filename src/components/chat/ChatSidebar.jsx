@@ -6,7 +6,14 @@ import "./Chat.css";
 import { startConversation } from "../../hooks/chat/chatUtils";
 import useChatList from "../../hooks/chat/useChatList";
 import useUserSearch from "../../hooks/chat/useUserSearch";
-import { collection, query, where, onSnapshot, orderBy, limit } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  orderBy,
+  limit,
+} from "firebase/firestore";
 
 export default function ChatSidebar() {
   const [open, setOpen] = useState(false);
@@ -25,14 +32,18 @@ export default function ChatSidebar() {
 
     const counts = {};
     const unsubs = conversations.map((conv) => {
+      // 🔧 Olvasatlan üzenetek: readBy tömb alapján
       const unreadQ = query(
         collection(db, "conversations", conv.id, "messages"),
-        where("receiverId", "==", user.uid),
-        where("read", "==", false)
+        where("readBy", "not-in", [user.uid]) // Firestore nem támogatja közvetlenül, kliens oldalon kell szűrni
       );
       const unsubUnread = onSnapshot(unreadQ, (snap) => {
-        counts[conv.id] = snap.size;
-        conv.unreadCount = snap.size;
+        const unread = snap.docs.filter((d) => {
+          const data = d.data();
+          return !data.readBy || !data.readBy.includes(user.uid);
+        }).length;
+        counts[conv.id] = unread;
+        conv.unreadCount = unread;
         const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
         setUnreadChats(total);
       });
@@ -45,7 +56,8 @@ export default function ChatSidebar() {
       const unsubLast = onSnapshot(lastMsgQ, (snap) => {
         if (!snap.empty) {
           const lastMsg = snap.docs[0].data();
-          conv.lastMessage = lastMsg.text;
+          conv.lastMessage =
+            lastMsg.text || (lastMsg.type === "image" ? "📷 kép" : "🎥 videó");
           conv.lastMessageCreatedAt = lastMsg.createdAt;
         }
       });
@@ -126,8 +138,15 @@ export default function ChatSidebar() {
               {!search && (
                 <ChatList
                   conversations={[...conversations].sort((a, b) => {
-                    const aTime = a.lastMessageCreatedAt?.toMillis?.() || 0;
-                    const bTime = b.lastMessageCreatedAt?.toMillis?.() || 0;
+                    // 🔧 Rendezés: először updatedAt, ha nincs akkor lastMessageCreatedAt
+                    const aTime =
+                      a.updatedAt?.toMillis?.() ||
+                      a.lastMessageCreatedAt?.toMillis?.() ||
+                      0;
+                    const bTime =
+                      b.updatedAt?.toMillis?.() ||
+                      b.lastMessageCreatedAt?.toMillis?.() ||
+                      0;
                     return bTime - aTime;
                   })}
                   onSelect={setActiveConv}
