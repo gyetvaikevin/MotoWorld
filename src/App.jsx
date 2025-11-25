@@ -25,6 +25,9 @@ import EditListing from "./pages/EditListing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 
+// 🔧 Debughoz importáljuk a ChatWindow-t
+import ChatWindow from "./components/chat/ChatWindow";
+
 import "./styles/App.css";
 
 // 🔒 PrivateRoute komponens
@@ -83,6 +86,16 @@ export default function App() {
                 />
                 <Route
                   path="/chat/:id"
+                  element={
+                    <PrivateRoute>
+                      <ChatPage />
+                    </PrivateRoute>
+                  }
+                />
+
+                {/* 🔧 Debug route a ChatWindow-hoz */}
+                <Route
+                  path="/messages"
                   element={
                     <PrivateRoute>
                       <ChatPage />

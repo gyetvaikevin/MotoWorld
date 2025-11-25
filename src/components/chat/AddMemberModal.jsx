@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   addDoc,
+  updateDoc,
   collection,
   query,
   where,
@@ -39,23 +40,32 @@ export default function AddMemberModal({ convId, onClose }) {
 
       const newParticipants = [...new Set([...oldConv.participants, uid])];
 
-      const newConvRef = await addDoc(collection(db, "conversations"), {
-        participants: newParticipants,
-        isGroup: true,
-        name: oldConv.isGroup ? (oldConv.name || "Új csoport") : "Új csoport",
-        // Soha ne legyen null: ha volt csoport, megtartjuk vagy fallback; ha privát, adunk defaultot
-        photoURL: oldConv.isGroup
-          ? (oldConv.photoURL || DEFAULT_GROUP_AVATAR)
-          : DEFAULT_GROUP_AVATAR,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        lastMessage: "Új tag hozzáadva",
-        createdBy: user.uid,
-      });
+      if (oldConv.isGroup) {
+        // 🔧 Már csoport → csak frissítjük a participants mezőt
+        await updateDoc(doc(db, "conversations", convId), {
+          participants: newParticipants,
+          updatedAt: serverTimestamp(),
+          lastMessage: "Új tag hozzáadva",
+        });
 
-      onClose({ newConvId: newConvRef.id });
+        onClose({ newConvId: convId });
+      } else {
+        // 🔧 Privátból csoportot csinálunk → új dokumentum
+        const newConvRef = await addDoc(collection(db, "conversations"), {
+          participants: newParticipants,
+          isGroup: true,
+          name: "Új csoport",
+          photoURL: DEFAULT_GROUP_AVATAR,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastMessage: "Új tag hozzáadva",
+          createdBy: user.uid,
+        });
+
+        onClose({ newConvId: newConvRef.id });
+      }
     } catch (err) {
-      console.error("❌ Új beszélgetés létrehozási hiba:", err);
+      console.error("❌ Új tag hozzáadás hiba:", err);
     }
   };
 

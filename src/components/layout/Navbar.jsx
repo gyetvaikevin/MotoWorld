@@ -66,6 +66,9 @@ export default function Navbar() {
         <li><NavLink to="/events">Események</NavLink></li>
         <li><NavLink to="/marketplace">Marketplace</NavLink></li>
 
+        {/* 🔧 Debug link a ChatWindow-hoz */}
+        <li><NavLink to="/messages">Üzenetek</NavLink></li>
+
         {user && (
           <>
             <li>
@@ -83,7 +86,6 @@ export default function Navbar() {
               )}
             </li>
             <li>
-              {/* 🔥 Itt javítva: mindig paraméteres útvonalra mutat */}
               <NavLink to={`/profile/${user.uid}`} className="profile-link">
                 {profile?.photoURL ? (
                   <img
