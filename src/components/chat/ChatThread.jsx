@@ -10,7 +10,7 @@ import EditGroupModal from "./EditGroupModal";
 import GroupMembersModal from "./GroupMembersModal"; // 🔧 új komponens import
 
 const DEFAULT_AVATAR = "/default-avatar.png";
-const DEFAULT_GROUP_AVATAR = "/default-group.png";
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
 
 export default function ChatThread({
   conversation,

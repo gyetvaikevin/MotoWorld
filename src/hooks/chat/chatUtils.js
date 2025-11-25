@@ -1,3 +1,4 @@
+// src/hooks/chat/chatUtils.js
 import {
   collection,
   setDoc,
@@ -10,9 +11,9 @@ import {
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
 
-// Új privát beszélgetés indítása vagy meglévő visszaadása
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
+
 export async function startConversation(currentUid, partnerUid) {
-  // Megnézzük, van-e már privát beszélgetés
   const q = query(
     collection(db, "conversations"),
     where("participants", "array-contains", currentUid)
@@ -27,14 +28,13 @@ export async function startConversation(currentUid, partnerUid) {
 
   if (existing) return existing.id;
 
-  // Ha nincs, létrehozunk egyet
   const docRef = doc(collection(db, "conversations"));
   await setDoc(docRef, {
     participants: [currentUid, partnerUid],
     createdBy: currentUid,
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(), // 🔧 mindig legyen
-    lastMessage: "Privát beszélgetés létrehozva", // 🔧 placeholder
+    updatedAt: serverTimestamp(),
+    lastMessage: "Privát beszélgetés létrehozva",
     isGroup: false,
     photoURL: null,
     name: null,
@@ -42,9 +42,6 @@ export async function startConversation(currentUid, partnerUid) {
 
   return docRef.id;
 }
-
-// Új csoportos beszélgetés indítása – mindig új dokumentumot hoz létre
-const DEFAULT_GROUP_PHOTO = "/default-avatar-group.png";
 
 export async function startGroupConversation(
   currentUid,
@@ -60,14 +57,13 @@ export async function startGroupConversation(
     updatedAt: serverTimestamp(),
     lastMessage: "Új csoport létrehozva",
     isGroup: true,
-    photoURL: groupPhotoURL ? groupPhotoURL : DEFAULT_GROUP_PHOTO, // 🔧 sosem null
+    photoURL: groupPhotoURL ? groupPhotoURL : DEFAULT_GROUP_AVATAR,
     name: groupName || "Új csoport",
   });
 
   return docRef.id;
 }
 
-// Egyszeri javító futtatás: hiányzó updatedAt visszatöltése
 export async function backfillMissingUpdatedAtForUser(userUid) {
   const q = query(
     collection(db, "conversations"),

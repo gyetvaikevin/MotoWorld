@@ -4,9 +4,11 @@ import { db, storage } from "../../services/firebase";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
+
 export default function EditGroupModal({ convId, currentName, currentPhoto, onClose }) {
   const [name, setName] = useState(currentName || "Névtelen csoport");
-  const [photoURL, setPhotoURL] = useState(currentPhoto || "/default-group.png");
+  const [photoURL, setPhotoURL] = useState(currentPhoto || DEFAULT_GROUP_AVATAR);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
 
@@ -16,31 +18,28 @@ export default function EditGroupModal({ convId, currentName, currentPhoto, onCl
     }
   };
 
-// EditGroupModal.jsx
-const handleSave = async () => {
-  try {
-    let finalPhotoURL = photoURL;
-    if (file) {
-      setUploading(true);
-      const storageRef = ref(storage, `group-avatars/${convId}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      finalPhotoURL = await getDownloadURL(storageRef);
+  const handleSave = async () => {
+    try {
+      let finalPhotoURL = photoURL || DEFAULT_GROUP_AVATAR;
+      if (file) {
+        setUploading(true);
+        const storageRef = ref(storage, `group-avatars/${convId}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        finalPhotoURL = await getDownloadURL(storageRef);
+        setUploading(false);
+      }
+
+      await updateDoc(doc(db, "conversations", convId), {
+        name,
+        photoURL: finalPhotoURL,
+      });
+
+      onClose({ name, photoURL: finalPhotoURL });
+    } catch (err) {
+      console.error("❌ Csoport frissítési hiba:", err);
       setUploading(false);
     }
-
-    await updateDoc(doc(db, "conversations", convId), {
-      name,
-      photoURL: finalPhotoURL,
-    });
-
-    // 🔥 visszaadjuk az új adatokat a szülőnek
-    onClose({ name, photoURL: finalPhotoURL });
-  } catch (err) {
-    console.error("❌ Csoport frissítési hiba:", err);
-    setUploading(false);
-  }
-};
-
+  };
 
   return (
     <div className="chat-modal-overlay" onClick={onClose}>
@@ -54,7 +53,7 @@ const handleSave = async () => {
         />
 
         <img
-          src={photoURL}
+          src={photoURL || DEFAULT_GROUP_AVATAR}
           alt="Csoport avatar"
           style={{ width: "64px", height: "64px", borderRadius: "50%", marginBottom: "0.5rem" }}
         />

@@ -1,3 +1,4 @@
+// src/components/chat/AddMemberModal.jsx
 import { useState } from "react";
 import { db } from "../../services/firebase";
 import {
@@ -11,6 +12,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
+
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
 
 export default function AddMemberModal({ convId, onClose }) {
   const { user } = useAuth();
@@ -39,13 +42,17 @@ export default function AddMemberModal({ convId, onClose }) {
       const newConvRef = await addDoc(collection(db, "conversations"), {
         participants: newParticipants,
         isGroup: true,
-        name: oldConv.isGroup ? oldConv.name : "Új csoport",
-        photoURL: oldConv.isGroup ? oldConv.photoURL : null,
+        name: oldConv.isGroup ? (oldConv.name || "Új csoport") : "Új csoport",
+        // Soha ne legyen null: ha volt csoport, megtartjuk vagy fallback; ha privát, adunk defaultot
+        photoURL: oldConv.isGroup
+          ? (oldConv.photoURL || DEFAULT_GROUP_AVATAR)
+          : DEFAULT_GROUP_AVATAR,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessage: "Új tag hozzáadva",
         createdBy: user.uid,
       });
 
-      // 🔥 visszaadjuk az új beszélgetés ID‑t
       onClose({ newConvId: newConvRef.id });
     } catch (err) {
       console.error("❌ Új beszélgetés létrehozási hiba:", err);

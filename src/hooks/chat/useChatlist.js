@@ -4,6 +4,8 @@ import { collection, query, where, onSnapshot, orderBy } from "firebase/firestor
 import { db } from "../../services/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
+
 export default function useChatList() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState([]);
@@ -16,7 +18,6 @@ export default function useChatList() {
 
     const colRef = collection(db, "conversations");
 
-    // 🔧 Mindig createdAt szerint kérünk le, mert az biztosan van minden dokumentumban
     const q = query(
       colRef,
       where("participants", "array-contains", user.uid),
@@ -37,16 +38,16 @@ export default function useChatList() {
               participants: parts,
               isGroup: !!data.isGroup,
               name: data.name || (data.isGroup ? "Névtelen csoport" : null),
-              photoURL: data.photoURL || (data.isGroup ? "/default-group.png" : null),
+              // Egységes default
+              photoURL: data.photoURL || (data.isGroup ? DEFAULT_GROUP_AVATAR : null),
               createdAt: data.createdAt || null,
               updatedAt: data.updatedAt || null,
               lastMessage: data.lastMessage || "",
-              lastMessageCreatedAt: null, // Sidebar tölti külön
+              lastMessageCreatedAt: null,
             };
           })
           .filter(Boolean);
 
-        // 🔧 Kliens oldali rendezés: preferáljuk updatedAt-et, ha van, különben createdAt
         const sorted = [...list].sort((a, b) => {
           const aTime = a.updatedAt?.toMillis?.() || a.createdAt?.toMillis?.() || 0;
           const bTime = b.updatedAt?.toMillis?.() || b.createdAt?.toMillis?.() || 0;
