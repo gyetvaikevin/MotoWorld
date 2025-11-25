@@ -33,24 +33,21 @@ export default function useConversation(conversation) {
     });
 
     return () => unsub();
-  }, [user, conversation]);
+  }, [user?.uid, conversation?.id]);
 
-  // 🔥 most már kezeljük a text és file típusokat
   const sendMessage = async (msg) => {
-    if (!user?.uid || !conversation?.participants) return;
-    const receiverId = conversation.participants.find((uid) => uid !== user.uid);
-    if (!receiverId) return;
+    if (!user?.uid || !conversation?.id) return;
 
     if (msg.type === "text") {
       await addDoc(collection(db, "conversations", conversation.id, "messages"), {
         senderId: user.uid,
-        receiverId,
         type: "text",
         text: msg.text.trim(),
         createdAt: serverTimestamp(),
-        read: false,
+        readBy: [user.uid],
       });
 
+      // frissítsük a beszélgetés meta adatokat
       await updateDoc(doc(db, "conversations", conversation.id), {
         updatedAt: serverTimestamp(),
         lastMessage: msg.text.trim(),
@@ -66,11 +63,10 @@ export default function useConversation(conversation) {
 
       await addDoc(collection(db, "conversations", conversation.id, "messages"), {
         senderId: user.uid,
-        receiverId,
         type: fileType,
         mediaUrl: url,
         createdAt: serverTimestamp(),
-        read: false,
+        readBy: [user.uid],
       });
 
       await updateDoc(doc(db, "conversations", conversation.id), {

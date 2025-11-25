@@ -1,4 +1,3 @@
-// src/hooks/chat/chatUtils.js
 import {
   collection,
   setDoc,
@@ -7,7 +6,6 @@ import {
   where,
   getDocs,
   doc,
-  updateDoc,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../../services/firebase";
@@ -35,40 +33,41 @@ export async function startConversation(currentUid, partnerUid) {
     participants: [currentUid, partnerUid],
     createdBy: currentUid,
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(), // kötelezően beállítjuk
-    lastMessage: "Privát beszélgetés létrehozva", // vizuális jelzés a listában
+    updatedAt: serverTimestamp(), // 🔧 mindig legyen
+    lastMessage: "Privát beszélgetés létrehozva", // 🔧 placeholder
     isGroup: false,
     photoURL: null,
     name: null,
   });
 
-  // Biztos ami biztos: külön update is, hogy az updatedAt mező tényleg létrejöjjön
-  await updateDoc(docRef, { updatedAt: serverTimestamp() });
-
   return docRef.id;
 }
 
 // Új csoportos beszélgetés indítása – mindig új dokumentumot hoz létre
-export async function startGroupConversation(currentUid, participantUids, groupName, groupPhotoURL = null) {
+const DEFAULT_GROUP_PHOTO = "/default-avatar-group.png";
+
+export async function startGroupConversation(
+  currentUid,
+  participantUids,
+  groupName,
+  groupPhotoURL
+) {
   const docRef = doc(collection(db, "conversations"));
   await setDoc(docRef, {
     participants: [currentUid, ...participantUids],
     createdBy: currentUid,
     createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(), // kötelezően beállítjuk
-    lastMessage: "Új csoport létrehozva", // vizuális jelzés a listában
+    updatedAt: serverTimestamp(),
+    lastMessage: "Új csoport létrehozva",
     isGroup: true,
-    photoURL: groupPhotoURL || null,
+    photoURL: groupPhotoURL ? groupPhotoURL : DEFAULT_GROUP_PHOTO, // 🔧 sosem null
     name: groupName || "Új csoport",
   });
-
-  // Biztos ami biztos: külön update is, hogy az updatedAt tényleg létrejöjjön
-  await updateDoc(docRef, { updatedAt: serverTimestamp() });
 
   return docRef.id;
 }
 
-// Egyszeri javító futtatás: hiányzó updatedAt visszatöltése (createdAt-re vagy mostani időre)
+// Egyszeri javító futtatás: hiányzó updatedAt visszatöltése
 export async function backfillMissingUpdatedAtForUser(userUid) {
   const q = query(
     collection(db, "conversations"),
@@ -82,8 +81,11 @@ export async function backfillMissingUpdatedAtForUser(userUid) {
     if (!data.updatedAt) {
       batch.update(docSnap.ref, {
         updatedAt: data.createdAt || serverTimestamp(),
-        // opcionális: ha teljesen üres a lastMessage, tegyünk be egy jelzést
-        lastMessage: data.lastMessage || (data.isGroup ? "Új csoport létrehozva" : "Privát beszélgetés létrehozva"),
+        lastMessage:
+          data.lastMessage ||
+          (data.isGroup
+            ? "Új csoport létrehozva"
+            : "Privát beszélgetés létrehozva"),
       });
     }
   });

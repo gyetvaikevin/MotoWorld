@@ -5,19 +5,23 @@ import { db } from "../../services/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 
 export function useFriendRequestCount() {
-  const { firebaseUser } = useAuth();
+  const { user } = useAuth(); // 🔧 fontos: a contextben a helyes property legyen
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!firebaseUser?.uid) return;
+    if (!user?.uid) return;
 
-    const ref = collection(db, "users", firebaseUser.uid, "friendRequests");
+    // 🔧 mindig a saját uid alatti friendRequests kollekciót figyeljük
+    const ref = collection(db, "users", user.uid, "friendRequests");
     const unsub = onSnapshot(ref, (snap) => {
       setCount(snap.size);
+    }, (err) => {
+      console.error("❌ FriendRequest snapshot hiba:", err);
+      setCount(0);
     });
 
     return () => unsub();
-  }, [firebaseUser?.uid]);
+  }, [user?.uid]);
 
   return count;
 }

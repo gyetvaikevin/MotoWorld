@@ -32,30 +32,28 @@ export default function ChatSidebar() {
 
     const counts = {};
     const unsubs = conversations.map((conv) => {
-      // 🔧 Olvasatlan üzenetek: readBy tömb alapján
-      const unreadQ = query(
+      // Olvasatlan üzenetek – klien oldali szűrés
+      const messagesQ = query(
         collection(db, "conversations", conv.id, "messages"),
-        where("readBy", "not-in", [user.uid]) // Firestore nem támogatja közvetlenül, kliens oldalon kell szűrni
+        orderBy("createdAt", "desc")
       );
-      const unsubUnread = onSnapshot(unreadQ, (snap) => {
-        const unread = snap.docs.filter((d) => {
-          const data = d.data();
-          return !data.readBy || !data.readBy.includes(user.uid);
-        }).length;
+      const unsubUnread = onSnapshot(messagesQ, (snap) => {
+        const docs = snap.docs.map((d) => d.data());
+        const unread = docs.filter(
+          (d) => !d.readBy || !d.readBy.includes(user.uid)
+        ).length;
+
         counts[conv.id] = unread;
-        conv.unreadCount = unread;
+
+        // 🔧 csak akkor állítsd be, ha van olvasatlan
+        conv.unreadCount = unread > 0 ? unread : undefined;
+
         const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
         setUnreadChats(total);
-      });
 
-      const lastMsgQ = query(
-        collection(db, "conversations", conv.id, "messages"),
-        orderBy("createdAt", "desc"),
-        limit(1)
-      );
-      const unsubLast = onSnapshot(lastMsgQ, (snap) => {
-        if (!snap.empty) {
-          const lastMsg = snap.docs[0].data();
+        // utolsó üzenet szövege és ideje
+        const lastMsg = docs[0];
+        if (lastMsg) {
           conv.lastMessage =
             lastMsg.text || (lastMsg.type === "image" ? "📷 kép" : "🎥 videó");
           conv.lastMessageCreatedAt = lastMsg.createdAt;
@@ -64,7 +62,6 @@ export default function ChatSidebar() {
 
       return () => {
         unsubUnread();
-        unsubLast();
       };
     });
 
@@ -76,11 +73,10 @@ export default function ChatSidebar() {
   const handleStartConversation = async (partnerId) => {
     if (!partnerId || !user) return;
     const convId = await startConversation(user.uid, partnerId);
-    const conv =
-      conversations.find((c) => c.id === convId) || {
-        id: convId,
-        participants: [user.uid, partnerId],
-      };
+    const conv = conversations.find((c) => c.id === convId) || {
+      id: convId,
+      participants: [user.uid, partnerId],
+    };
     setActiveConv(conv);
     setSearch("");
   };
@@ -138,14 +134,16 @@ export default function ChatSidebar() {
               {!search && (
                 <ChatList
                   conversations={[...conversations].sort((a, b) => {
-                    // 🔧 Rendezés: először updatedAt, ha nincs akkor lastMessageCreatedAt
+                    // 🔧 Rendezés: először lastMessageCreatedAt, aztán updatedAt, végül createdAt
                     const aTime =
-                      a.updatedAt?.toMillis?.() ||
                       a.lastMessageCreatedAt?.toMillis?.() ||
+                      a.updatedAt?.toMillis?.() ||
+                      a.createdAt?.toMillis?.() ||
                       0;
                     const bTime =
-                      b.updatedAt?.toMillis?.() ||
                       b.lastMessageCreatedAt?.toMillis?.() ||
+                      b.updatedAt?.toMillis?.() ||
+                      b.createdAt?.toMillis?.() ||
                       0;
                     return bTime - aTime;
                   })}

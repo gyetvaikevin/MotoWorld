@@ -30,7 +30,6 @@ export function AuthProvider({ children }) {
     const unsub = onSnapshot(
       userRef,
       (snap) => {
-        // mindig legyen uid a user objektumban
         setProfile(
           snap.exists()
             ? { uid: firebaseUser.uid, ...snap.data() }
@@ -38,7 +37,11 @@ export function AuthProvider({ children }) {
         );
         setLoading(false);
       },
-      () => setLoading(false)
+      (err) => {
+        console.error("❌ Firestore user snapshot hiba:", err);
+        setProfile({ uid: firebaseUser.uid });
+        setLoading(false);
+      }
     );
     return unsub;
   }, [firebaseUser]);
@@ -46,8 +49,8 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider
       value={{
-        user: profile ? { ...profile, uid: firebaseUser?.uid } : null,
-        firebaseUser, // ha kell a nyers Firebase user (pl. email, providerData)
+        user: profile,       // 🔧 már tartalmazza az uid-et
+        firebaseUser,        // nyers Firebase user (email, providerData)
         loading,
       }}
     >

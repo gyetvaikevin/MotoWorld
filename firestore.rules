@@ -1,3 +1,4 @@
+// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -16,29 +17,23 @@ service cloud.firestore {
 
     /* -------------------- FRIEND REQUESTS -------------------- */
     match /users/{uid}/friendRequests/{reqId} {
-      // létrehozás: a küldő írhatja, fromUid == auth.uid
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.fromUid;
 
-      // olvasás/törlés: csak a címzett (uid) láthatja és törölheti
+      // címzett olvashat/törölhet
       allow read, delete: if request.auth != null
         && request.auth.uid == uid;
 
-      // PLUSZ: a küldő olvashatja a saját request doc-ját (doc ID = sender uid)
+      // küldő olvashatja a saját req doc-ját (ID = sender uid)
       allow read: if request.auth != null
         && request.auth.uid == reqId;
     }
 
     /* -------------------- FRIENDS -------------------- */
     match /users/{uid}/friends/{friendUid} {
-      // csak a saját barátlistádat olvashatod
       allow read: if request.auth != null && request.auth.uid == uid;
-
-      // létrehozás: engedjük a saját uid-nak ÉS a friendUid-nak is
       allow create: if request.auth != null
         && (request.auth.uid == uid || request.auth.uid == friendUid);
-
-      // törlés: ugyanígy, bármelyik fél törölheti a kapcsolatot
       allow delete: if request.auth != null
         && (request.auth.uid == uid || request.auth.uid == friendUid);
     }
@@ -114,31 +109,38 @@ service cloud.firestore {
 
     /* -------------------- CHAT / CONVERSATIONS -------------------- */
     match /conversations/{convId} {
-      // Olvasás: csak résztvevők láthatják
+      // olvasás: csak résztvevők
       allow read: if request.auth != null
         && request.auth.uid in resource.data.participants;
 
-      // Létrehozás: csak akkor, ha a saját uid benne van a participants-ben
+      // létrehozás: auth uid szerepeljen participants-ben (lista)
       allow create: if request.auth != null
         && request.resource.data.participants is list
         && request.auth.uid in request.resource.data.participants;
 
-      // Módosítás / törlés: csak résztvevők
-      allow update, delete: if request.auth != null
+      // módosítás/törlés: csak résztvevők
+      // engedjük lastMessage és updatedAt, name, photoURL frissítését is
+      allow update: if request.auth != null
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          "lastMessage", "updatedAt", "name", "photoURL"
+        ]);
+
+      allow delete: if request.auth != null
         && request.auth.uid in resource.data.participants;
 
-      // Üzenetek alkollekció
+      // üzenetek
       match /messages/{msgId} {
         function convParticipants() {
           return get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
         }
 
-        // Olvasás: csak résztvevők
+        // olvasás: csak résztvevők
         allow read: if request.auth != null
           && request.auth.uid in convParticipants();
 
-        // Létrehozás: a küldőnek benne kell lennie a participants-ben
-        // 🔥 receiverId NEM kötelező többé
+        // létrehozás: a küldő legyen a résztvevők között
+        // kötelező mezők: senderId, type ("text"|"image"|"video"), text vagy mediaUrl, createdAt, readBy lista
         allow create: if request.auth != null
           && request.auth.uid == request.resource.data.senderId
           && request.resource.data.senderId in convParticipants()
@@ -146,14 +148,15 @@ service cloud.firestore {
           && (
             (request.resource.data.type == "text" && request.resource.data.text is string) ||
             ((request.resource.data.type == "image" || request.resource.data.type == "video") && request.resource.data.mediaUrl is string)
-          );
+          )
+          && request.resource.data.readBy is list;
 
-        // Update: csak a címzett állíthatja read:true-ra
+        // frissítés: kizárólag readBy módosítása (olvasottra állítás)
         allow update: if request.auth != null
           && request.auth.uid in convParticipants()
-          && request.resource.data.diff(resource.data).changedKeys().hasOnly(["read"]);
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(["readBy"]);
 
-        // Törlés: csak a küldő törölhet
+        // törlés: csak a küldő törölhet
         allow delete: if request.auth != null
           && request.auth.uid == resource.data.senderId;
       }

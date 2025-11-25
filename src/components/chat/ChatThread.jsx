@@ -12,7 +12,11 @@ import GroupMembersModal from "./GroupMembersModal"; // 🔧 új komponens impor
 const DEFAULT_AVATAR = "/default-avatar.png";
 const DEFAULT_GROUP_AVATAR = "/default-group.png";
 
-export default function ChatThread({ conversation, onBack, onNavigateToConversation }) {
+export default function ChatThread({
+  conversation,
+  onBack,
+  onNavigateToConversation,
+}) {
   const { user } = useAuth();
   const { messages, sendMessage } = useConversation(conversation);
   const [partner, setPartner] = useState(null);

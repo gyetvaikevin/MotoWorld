@@ -1,11 +1,10 @@
-// src/components/chat/ChatList.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db } from "../../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
 import UserNameLink from "../profile/UserNameLink";
 
-const DEFAULT_GROUP_AVATAR = "/default-group.png";
+const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png"; // 🔧 pontos fájlnév
 
 export default function ChatList({ conversations, onSelect }) {
   const { user } = useAuth();
@@ -22,6 +21,18 @@ export default function ChatList({ conversations, onSelect }) {
     return null;
   };
 
+  // 🔧 partner adatok betöltése useEffect-ben
+  useEffect(() => {
+    conversations.forEach((conv) => {
+      if (!conv.isGroup) {
+        const partnerId = conv.participants.find((p) => p !== user?.uid);
+        if (partnerId && !userCache[partnerId]) {
+          fetchUser(partnerId);
+        }
+      }
+    });
+  }, [conversations, user?.uid]);
+
   return (
     <div className="chat-list">
       <h3>Beszélgetések</h3>
@@ -30,7 +41,6 @@ export default function ChatList({ conversations, onSelect }) {
         {conversations.map((conv) => {
           const hasUnread = conv.unreadCount && conv.unreadCount > 0;
 
-          // 🔥 ha csoportos chat
           if (conv.isGroup) {
             return (
               <li
@@ -49,19 +59,15 @@ export default function ChatList({ conversations, onSelect }) {
                     {conv.lastMessage || "Új csoportos beszélgetés"}
                   </p>
                 </div>
-                {conv.unreadCount > 0 && (
-                  <span className="unread-dot">{conv.unreadCount}</span>
-                )}
+                {hasUnread && <span className="unread-dot">{conv.unreadCount}</span>}
               </li>
             );
           }
 
-          // 🔥 privát chat
           const partnerId = conv.participants.find((p) => p !== user?.uid);
           if (!partnerId) return null;
 
           const partner = userCache[partnerId];
-          if (!partner) fetchUser(partnerId);
 
           return (
             <li
@@ -80,9 +86,7 @@ export default function ChatList({ conversations, onSelect }) {
                   {conv.lastMessage || "Új beszélgetés"}
                 </p>
               </div>
-              {conv.unreadCount > 0 && (
-                <span className="unread-dot">{conv.unreadCount}</span>
-              )}
+              {hasUnread && <span className="unread-dot">{conv.unreadCount}</span>}
             </li>
           );
         })}
