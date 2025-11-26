@@ -1,4 +1,3 @@
-// src/hooks/chat/useConversation.js
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -12,10 +11,8 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../services/firebase";
-import { useAuth } from "../../contexts/AuthContext";
 
-export default function useConversation(conversation) {
-  const { user } = useAuth();
+export default function useConversation(conversation, user) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +44,6 @@ export default function useConversation(conversation) {
         readBy: [user.uid],
       });
 
-      // frissítsük a beszélgetés meta adatokat
       await updateDoc(doc(db, "conversations", conversation.id), {
         updatedAt: serverTimestamp(),
         lastMessage: msg.text.trim(),
@@ -55,7 +51,10 @@ export default function useConversation(conversation) {
     }
 
     if (msg.type === "file") {
-      const fileRef = ref(storage, `chat/${conversation.id}/${Date.now()}-${msg.file.name}`);
+      const fileRef = ref(
+        storage,
+        `chat/${conversation.id}/${Date.now()}-${msg.file.name}`
+      );
       await uploadBytes(fileRef, msg.file);
       const url = await getDownloadURL(fileRef);
 
