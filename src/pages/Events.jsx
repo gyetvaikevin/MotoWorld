@@ -1,5 +1,4 @@
-// src/pages/Events.jsx
-import React from "react";
+import React, { useState } from "react"; // 🔧 kell a useState
 import useEvents from "../hooks/events/useEvents";
 import EventForm from "../components/events/EventForm";
 import EventFilters from "../components/events/EventFilters";
@@ -8,8 +7,6 @@ import EditEventForm from "../components/events/EditEventForm";
 import LoaderWrapper from "../components/common/LoaderWrapper";
 import "../styles/Cards.css";
 import "../styles/Events.css";
-
-
 
 export default function Events() {
   const {
@@ -36,22 +33,50 @@ export default function Events() {
     openRouteInMaps,
   } = useEvents();
 
-  const filtered = events.filter(
-    (ev) =>
-      ev.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ev.desc.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // 🔧 új state a locationFilter-hez
+  const [locationFilter, setLocationFilter] = useState(null);
 
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortOption === "dateDesc")
-      return b.createdAt?.seconds - a.createdAt?.seconds;
-    if (sortOption === "dateAsc")
-      return a.createdAt?.seconds - b.createdAt?.seconds;
-    if (sortOption === "likesDesc")
-      return (b.likes?.length || 0) - (a.likes?.length || 0);
-    if (sortOption === "likesAsc")
-      return (a.likes?.length || 0) - (b.likes?.length || 0);
-    return 0;
+  // 🔧 helper függvény a távolság számításhoz (Haversine formula)
+  const getDistanceKm = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Föld sugara km-ben
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) *
+        Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  // 🔧 szűrés szöveg + csak start pont alapján
+  const filtered = events.filter((ev) => {
+    const matchesText =
+      ev.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ev.desc.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (!locationFilter) {
+      return matchesText;
+    }
+
+    // csak a start pontot nézzük (route[0] vagy stops[0])
+    const start =
+      (ev.route && ev.route.length > 0 && ev.route[0]) ||
+      (ev.stops && ev.stops.length > 0 && ev.stops[0]) ||
+      null;
+
+    if (start && start.lat && start.lng) {
+      const dist = getDistanceKm(
+        locationFilter.center[0],
+        locationFilter.center[1],
+        start.lat,
+        start.lng
+      );
+      return matchesText && dist <= locationFilter.radius / 1000; // m → km
+    }
+
+    return false;
   });
 
   const handleEditInit = (ev) => {
@@ -77,6 +102,8 @@ export default function Events() {
         setSearchTerm={setSearchTerm}
         sortOption={sortOption}
         setSortOption={setSortOption}
+        locationFilter={locationFilter}        // 🔧 átadva
+        setLocationFilter={setLocationFilter}  // 🔧 átadva
       />
 
       {user && (
@@ -103,10 +130,10 @@ export default function Events() {
         <LoaderWrapper text="Események betöltése..." />
       ) : events.length === 0 ? (
         <LoaderWrapper text="Nincsenek események" />
-      ) : sorted.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="card"><p>Nincs találat.</p></div>
       ) : (
-        sorted.map((ev) =>
+        filtered.map((ev) =>
           editId === ev.id ? (
             <EditEventForm
               editTitle={editTitle}

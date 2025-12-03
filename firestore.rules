@@ -48,53 +48,78 @@ service cloud.firestore {
         && request.auth.uid == resource.data.receiverId;
     }
 
-    /* -------------------- POSTS -------------------- */
-    match /posts/{postId} {
-      allow read: if true;
+/* -------------------- POSTS -------------------- */
+match /posts/{postId} {
+  // csak akkor olvasható, ha a bejelentkezett user ismerőse a szerzőnek
+  allow read: if request.auth != null
+    && exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.createdByUid));
 
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.createdByUid;
+  // létrehozás: csak a szerző
+  allow create: if request.auth != null
+    && request.auth.uid == request.resource.data.createdByUid;
 
-      allow update: if request.auth != null && (
-        request.auth.uid == resource.data.createdByUid ||
-        request.resource.data.diff(resource.data).changedKeys().hasOnly(["likes"])
-      );
+  // frissítés: szerző vagy csak likes mező módosítása
+  allow update: if request.auth != null && (
+    request.auth.uid == resource.data.createdByUid ||
+    request.resource.data.diff(resource.data).changedKeys().hasOnly(["likes"])
+  );
 
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.createdByUid;
+  // törlés: csak a szerző
+  allow delete: if request.auth != null
+    && request.auth.uid == resource.data.createdByUid;
 
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.createdByUid;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.createdByUid;
-      }
-    }
+  match /comments/{commentId} {
+    // kommentek olvasása is csak akkor, ha ismerős a szerző
+    allow read: if request.auth != null
+      && exists(/databases/$(database)/documents/users/$(request.auth.uid)/friends/$(resource.data.createdByUid));
 
-    /* -------------------- EVENTS -------------------- */
-    match /events/{eventId} {
-      allow read: if true;
+    // komment létrehozás: csak a bejelentkezett user
+    allow create: if request.auth != null
+      && request.auth.uid == request.resource.data.createdByUid;
 
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.createdByUid;
+    // komment törlés: csak a szerző
+    allow delete: if request.auth != null
+      && request.auth.uid == resource.data.createdByUid;
+  }
+}
 
-      allow update: if request.auth != null && (
-        request.auth.uid == resource.data.createdByUid ||
-        request.resource.data.diff(resource.data).changedKeys().hasOnly(["likes"])
-      );
+/* -------------------- EVENTS -------------------- */
+match /events/{eventId} {
+  allow read: if true;
 
-      allow delete: if request.auth != null
-        && request.auth.uid == resource.data.createdByUid;
+  allow create: if request.auth != null
+    && request.auth.uid == request.resource.data.createdByUid
+    && request.resource.data.startDate is timestamp
+    && (!("endDate" in request.resource.data) || request.resource.data.endDate is timestamp)
+    // ha van helyszín, akkor típushelyesen legyen
+    && (!("lat" in request.resource.data) || request.resource.data.lat is number)
+    && (!("lng" in request.resource.data) || request.resource.data.lng is number)
+    && (!("geohash" in request.resource.data) || request.resource.data.geohash is string);
 
-      match /comments/{commentId} {
-        allow read: if true;
-        allow create: if request.auth != null
-          && request.auth.uid == request.resource.data.createdByUid;
-        allow delete: if request.auth != null
-          && request.auth.uid == resource.data.createdByUid;
-      }
-    }
+  allow update: if request.auth != null && (
+    // szerző módosíthatja az esemény adatait
+    (request.auth.uid == resource.data.createdByUid &&
+      request.resource.data.startDate is timestamp &&
+      (!("endDate" in request.resource.data) || request.resource.data.endDate is timestamp) &&
+      (!("lat" in request.resource.data) || request.resource.data.lat is number) &&
+      (!("lng" in request.resource.data) || request.resource.data.lng is number) &&
+      (!("geohash" in request.resource.data) || request.resource.data.geohash is string)
+    )
+    // vagy bárki módosíthatja a likes mezőt
+    || request.resource.data.diff(resource.data).changedKeys().hasOnly(["likes"])
+  );
+
+  allow delete: if request.auth != null
+    && request.auth.uid == resource.data.createdByUid;
+
+  match /comments/{commentId} {
+    allow read: if true;
+    allow create: if request.auth != null
+      && request.auth.uid == request.resource.data.createdByUid;
+    allow delete: if request.auth != null
+      && request.auth.uid == resource.data.createdByUid;
+  }
+}
 
     /* -------------------- MARKETPLACE -------------------- */
     match /marketplace/{listingId} {
