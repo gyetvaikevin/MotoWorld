@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useNotifications from "../../hooks/notifications/useNotifications";
 import useUsers from "../../hooks/useUsers";
 import { formatDistanceToNow } from "date-fns";
-import "./Notifications.css";
+import "../../styles/Notifications.css";
 
 export default function NotificationList({ user }) {
   const { notifications, markAsRead } = useNotifications(user?.uid);

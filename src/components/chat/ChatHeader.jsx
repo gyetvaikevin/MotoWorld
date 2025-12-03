@@ -1,4 +1,6 @@
 import UserNameLink from "../profile/UserNameLink";
+import "../../styles/ChatHeader.css";
+
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";

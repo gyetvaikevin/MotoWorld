@@ -1,6 +1,8 @@
 import AddMemberModal from "./AddMemberModal";
 import EditGroupModal from "./EditGroupModal";
 import GroupMembersModal from "./GroupMembersModal";
+import "../../styles/ChatModal.css";
+
 
 export default function ChatModals({
   convMeta,

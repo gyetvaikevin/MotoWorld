@@ -13,6 +13,8 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
+import "../../styles/ChatModal.css";
+
 
 const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
 

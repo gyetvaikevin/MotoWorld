@@ -7,7 +7,7 @@ import { doc, onSnapshot, collection, query, where } from "firebase/firestore";
 import { FaMotorcycle } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import NotificationsDropdown from "./NotificationsDropdown";
-import "./Navbar.css";
+import "../../styles/Navbar.css";
 import { useFriendRequestCount } from "../../hooks/friends/useFriendRequestCount";
 
 const DEFAULT_AVATAR = "/default-avatar.png";

@@ -1,3 +1,5 @@
+import "../../styles/ChatMessage.css";
+
 const DEFAULT_AVATAR = "/default-avatar.png";
 
 export default function ChatMessages({

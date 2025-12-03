@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { db } from "../../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import "./Chat.css";
+import "../../styles/ChatModal.css";
+
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import NotificationList from "../notifications/NotificationList";
 import { useAuth } from "../../contexts/AuthContext";
 import { FaBell } from "react-icons/fa";
-import "../notifications/Notifications.css";
+import "../../styles/Notifications.css";
 
 export default function NotificationsDropdown() {
   const { user } = useAuth();

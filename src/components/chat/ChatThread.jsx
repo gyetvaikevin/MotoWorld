@@ -9,7 +9,7 @@ import ChatModals from "./ChatModals";
 import useConversation from "../../hooks/chat/useConversation";
 import usePartner from "../../hooks/chat/usePartner";
 import useCurrentUserData from "../../hooks/chat/useCurrentUserData";
-import "./Chat.css";
+import "../../styles/ChatThread.css";
 
 const DEFAULT_AVATAR = "/default-avatar.png";
 

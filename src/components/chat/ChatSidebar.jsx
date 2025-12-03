@@ -2,17 +2,15 @@ import { useState, useEffect } from "react";
 import { auth, db } from "../../services/firebase";
 import ChatThread from "./ChatThread";
 import ChatList from "./ChatList";
-import "./Chat.css";
+import "../../styles/ChatSidebar.css";
 import { startConversation } from "../../hooks/chat/chatUtils";
 import useChatList from "../../hooks/chat/useChatList";
 import useUserSearch from "../../hooks/chat/useUserSearch";
 import {
   collection,
   query,
-  where,
   onSnapshot,
   orderBy,
-  limit,
 } from "firebase/firestore";
 
 export default function ChatSidebar() {
@@ -32,7 +30,6 @@ export default function ChatSidebar() {
 
     const counts = {};
     const unsubs = conversations.map((conv) => {
-      // Olvasatlan üzenetek – klien oldali szűrés
       const messagesQ = query(
         collection(db, "conversations", conv.id, "messages"),
         orderBy("createdAt", "desc")
@@ -44,14 +41,11 @@ export default function ChatSidebar() {
         ).length;
 
         counts[conv.id] = unread;
-
-        // 🔧 csak akkor állítsd be, ha van olvasatlan
         conv.unreadCount = unread > 0 ? unread : undefined;
 
         const total = Object.values(counts).reduce((sum, c) => sum + c, 0);
         setUnreadChats(total);
 
-        // utolsó üzenet szövege és ideje
         const lastMsg = docs[0];
         if (lastMsg) {
           conv.lastMessage =
@@ -60,9 +54,7 @@ export default function ChatSidebar() {
         }
       });
 
-      return () => {
-        unsubUnread();
-      };
+      return () => unsubUnread();
     });
 
     return () => {
@@ -104,7 +96,7 @@ export default function ChatSidebar() {
                 />
               </div>
 
-              {search && (
+              {search ? (
                 <div className="chat-search-results">
                   {results.length > 0 ? (
                     results.map((u) => (
@@ -129,26 +121,25 @@ export default function ChatSidebar() {
                     <p className="no-results">Nincs találat</p>
                   )}
                 </div>
-              )}
-
-              {!search && (
-                <ChatList
-                  conversations={[...conversations].sort((a, b) => {
-                    // 🔧 Rendezés: először lastMessageCreatedAt, aztán updatedAt, végül createdAt
-                    const aTime =
-                      a.lastMessageCreatedAt?.toMillis?.() ||
-                      a.updatedAt?.toMillis?.() ||
-                      a.createdAt?.toMillis?.() ||
-                      0;
-                    const bTime =
-                      b.lastMessageCreatedAt?.toMillis?.() ||
-                      b.updatedAt?.toMillis?.() ||
-                      b.createdAt?.toMillis?.() ||
-                      0;
-                    return bTime - aTime;
-                  })}
-                  onSelect={setActiveConv}
-                />
+              ) : (
+                <div className="chat-list-wrapper">
+                  <ChatList
+                    conversations={[...conversations].sort((a, b) => {
+                      const aTime =
+                        a.lastMessageCreatedAt?.toMillis?.() ||
+                        a.updatedAt?.toMillis?.() ||
+                        a.createdAt?.toMillis?.() ||
+                        0;
+                      const bTime =
+                        b.lastMessageCreatedAt?.toMillis?.() ||
+                        b.updatedAt?.toMillis?.() ||
+                        b.createdAt?.toMillis?.() ||
+                        0;
+                      return bTime - aTime;
+                    })}
+                    onSelect={setActiveConv}
+                  />
+                </div>
               )}
             </>
           ) : (

@@ -15,7 +15,7 @@ import { db } from "../../services/firebase";
 import LoaderWrapper from "../common/LoaderWrapper";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
-import "./Comments.css";
+import "../../styles/Comments.css";
 import { notifyUser } from "../../utils/notifyUser";
 
 export default function Comments({ parentId, parentType = "events", user }) {

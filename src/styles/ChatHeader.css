@@ -1,0 +1,32 @@
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #333;
+  background: #1a1a1a;
+}
+
+.chat-header-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.chat-header-name {
+  margin: 0;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.edit-group-btn,
+.members-btn,
+.add-member-btn {
+  margin-left: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--color-primary);
+}

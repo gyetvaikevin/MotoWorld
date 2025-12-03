@@ -1,3 +1,5 @@
+import "../../styles/ChatModal.css";
+
 export default function ChatMediaModal({ selectedMedia, onClose }) {
   if (!selectedMedia) return null;
   return (

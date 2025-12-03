@@ -1,6 +1,6 @@
 // src/components/LoaderWrapper.jsx
 import React from "react";
-import "./LoaderWrapper.css";
+import "../../styles/LoaderWrapper.css";
 
 export default function LoaderWrapper({ text = "Loading..." }) {
   return (

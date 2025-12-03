@@ -1,4 +1,3 @@
-// src/components/profile/UserNameLink.jsx
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { db } from "../../services/firebase";
@@ -9,8 +8,15 @@ export default function UserNameLink({ uid, displayName }) {
   const [name, setName] = useState(displayName);
 
   useEffect(() => {
+    // ha van displayName prop, azonnal frissítjük
+    if (displayName) {
+      setName(displayName);
+      return;
+    }
+
+    // ha nincs, akkor lekérjük Firestore-ból
     const fetchName = async () => {
-      if (!displayName && uid) {
+      if (uid) {
         try {
           const snap = await getDoc(doc(db, "users", uid));
           if (snap.exists()) {
@@ -26,7 +32,7 @@ export default function UserNameLink({ uid, displayName }) {
       }
     };
     fetchName();
-  }, [uid, displayName]);
+  }, [uid, displayName]); // fontos: mindkettőre figyelünk
 
   return (
     <Link to={`/profile/${uid}`} className="profile-link">

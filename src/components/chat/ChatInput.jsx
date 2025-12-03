@@ -1,5 +1,6 @@
 // src/components/chat/ChatInput.jsx
 import { useState } from "react";
+import "../../styles/ChatInput.css";
 
 export default function ChatInput({ onSend }) {
   const [text, setText] = useState("");

@@ -19,7 +19,7 @@ import ChatMessages from "./ChatMessages";
 import ChatInput from "./ChatInput";
 import ChatMediaModal from "./ChatMediaModal";
 import ChatModals from "./ChatModals";
-import "./Chat.css";
+import "../../styles/ChatWindow.css";
 
 const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png";
 const DEFAULT_AVATAR = "/default-avatar.png";

@@ -3,6 +3,7 @@ import { db } from "../../services/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { useAuth } from "../../contexts/AuthContext";
 import UserNameLink from "../profile/UserNameLink";
+import "../../styles/ChatList.css";
 
 const DEFAULT_GROUP_AVATAR = "/default-avatar-group.png"; // 🔧 pontos fájlnév
 

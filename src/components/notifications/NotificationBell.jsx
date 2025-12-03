@@ -1,7 +1,7 @@
 // src/components/notifications/NotificationBell.jsx
 import { useAuth } from "../../contexts/AuthContext";
 import useNotifications from "../../hooks/notifications/useNotifications";
-import "./Notifications.css";
+import ".../../styles/Notifications.css";
 
 export default function NotificationBell({ onClick }) {
   const { user } = useAuth();
