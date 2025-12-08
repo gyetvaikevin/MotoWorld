@@ -19,7 +19,6 @@ export default function Navbar() {
   const navigate = useNavigate();
   const friendRequestCount = useFriendRequestCount();
 
-  // Saját profil adatok
   useEffect(() => {
     if (!user?.uid) {
       setProfile(null);
@@ -33,7 +32,6 @@ export default function Navbar() {
     return () => unsub();
   }, [user]);
 
-  // Olvasatlan értesítések számláló
   useEffect(() => {
     if (!user?.uid) return;
     const q = query(
@@ -54,67 +52,71 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <div className="nav-logo">
-        <NavLink to="/">
-          <FaMotorcycle className="logo-icon" />
-          MotoWorld
+      <div className="nav-left">
+        <NavLink to="/" className="nav-logo">
+          <img src="/MotoWorld-logo.png" alt="MotoWorld" className="logo-img" />
         </NavLink>
       </div>
 
-      <ul className="nav-links">
-        <li><NavLink to="/" end>Kezdőlap</NavLink></li>
-        <li><NavLink to="/events">Események</NavLink></li>
-        <li><NavLink to="/marketplace">Marketplace</NavLink></li>
+      <div className="nav-center">
+        <NavLink to="/events" className="nav-icon">
+          <img
+            src="/events-logo.png"
+            alt="Események"
+            className="nav-icon-img"
+          />
+        </NavLink>
+        <NavLink to="/marketplace" className="nav-icon">
+          <img
+            src="/marketplace-logo.png"
+            alt="Marketplace"
+            className="nav-icon-img"
+          />
+        </NavLink>
+        <NavLink to="/messages" className="nav-icon">
+          <img src="/chat-icon.png" alt="Chat" className="nav-icon-img" />
+        </NavLink>
+      </div>
 
-        {/* 🔧 Debug link a ChatWindow-hoz */}
-        <li><NavLink to="/messages">Üzenetek</NavLink></li>
-
+      {/* Jobb oldal: profil + logout */}
+      <div className="nav-right">
         {user && (
           <>
-            <li>
-              <NavLink to="/friends" className="friends-link">
-                Barátok{" "}
-                {friendRequestCount > 0 && (
-                  <span className="badge">{friendRequestCount}</span>
-                )}
-              </NavLink>
-            </li>
-            <li className="notifications-link">
-              <NotificationsDropdown />
-              {notifCount > 0 && (
-                <span className="badge">{notifCount}</span>
+            <NavLink to="/friends" className="friends-link">
+              Barátok{" "}
+              {friendRequestCount > 0 && (
+                <span className="badge">{friendRequestCount}</span>
               )}
-            </li>
-            <li>
-              <NavLink to={`/profile/${user.uid}`} className="profile-link">
-                {profile?.photoURL ? (
-                  <img
-                    src={profile.photoURL}
-                    alt="Profil"
-                    className="nav-profile-pic"
-                  />
-                ) : (
-                  <div className="nav-profile-placeholder">
-                    {profile?.displayName?.[0]?.toUpperCase() || "?"}
-                  </div>
-                )}
-              </NavLink>
-            </li>
-            <li>
-              <button className="logout-btn" onClick={handleLogout}>
-                Kijelentkezés
-              </button>
-            </li>
+            </NavLink>
+            <div className="notifications-link">
+              <NotificationsDropdown />
+              {notifCount > 0 && <span className="badge">{notifCount}</span>}
+            </div>
+            <NavLink to={`/profile/${user.uid}`} className="profile-link">
+              {profile?.photoURL ? (
+                <img
+                  src={profile.photoURL}
+                  alt="Profil"
+                  className="nav-profile-pic"
+                />
+              ) : (
+                <div className="nav-profile-placeholder">
+                  {profile?.displayName?.[0]?.toUpperCase() || "?"}
+                </div>
+              )}
+            </NavLink>
+            <button className="logout-btn" onClick={handleLogout}>
+              Kijelentkezés
+            </button>
           </>
         )}
-
         {!user && (
           <>
-            <li><NavLink to="/login">Bejelentkezés</NavLink></li>
-            <li><NavLink to="/register">Regisztráció</NavLink></li>
+            <NavLink to="/login">Bejelentkezés</NavLink>
+            <NavLink to="/register">Regisztráció</NavLink>
           </>
         )}
-      </ul>
+      </div>
     </nav>
   );
 }

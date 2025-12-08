@@ -4,8 +4,9 @@ import { db } from "../services/firebase";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { Link } from "react-router-dom";
 import LoaderWrapper from "../components/common/LoaderWrapper";
-import UserNameLink from "../components/profile/UserNameLink"; // 🔥 új import
+import UserNameLink from "../components/profile/UserNameLink"; 
 import "../styles/Cards.css";
+import "../styles/Marketplace.css";
 
 export default function Marketplace() {
   const [listings, setListings] = useState([]);

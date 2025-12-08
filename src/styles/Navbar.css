@@ -5,17 +5,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.8rem 2rem;
-
   position: sticky;
   top: 0;
   z-index: 1000;
-
   width: 100%;
   max-width: 100%;
   margin: 0;
   box-sizing: border-box;
 }
 
+/* Bal oldali logó */
 .nav-logo a {
   display: flex;
   align-items: center;
@@ -25,33 +24,42 @@
   text-decoration: none;
 }
 
-.logo-icon {
-  margin-right: 0.5rem;
-  font-size: 1.6rem;
+.logo-img {
+  height: 44px; /* kicsit nagyobb */
+  border-radius: 8px; /* lekerekített */
+  transition: transform 0.2s ease;
 }
 
-.nav-links {
-  list-style: none;
+.logo-img:hover {
+  transform: scale(1.05);
+}
+
+/* Középső ikonok */
+.nav-center {
   display: flex;
-  gap: 1.2rem;
-  margin: 0;
-  padding: 0;
+  gap: 1.6rem; /* nagyobb térköz */
   align-items: center;
 }
 
-.nav-links a {
-  color: var(--color-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: var(--transition);
+.nav-icon-img {
+  height: 40px; /* nagyobb ikon */
+  width: 40px;
+  border-radius: 10px; /* lekerekített sarkok */
+  object-fit: contain;
+  transition: all 0.25s ease;
 }
 
-.nav-links a.active {
-  border-bottom: 2px solid var(--color-secondary);
+.nav-icon-img:hover {
+  transform: translateY(-2px) scale(1.08); /* kis mozgás */
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.25))
+          brightness(1.2); /* fényesebb narancs hatás */
 }
 
-.nav-links a:hover {
-  opacity: 0.8;
+/* Jobb oldali profil + logout */
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .logout-btn {
@@ -70,18 +78,23 @@
   color: var(--color-primary);
 }
 
-/* Profilkép a navbarban */
+/* Profilkép */
 .nav-profile-pic {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #fff;
+  transition: transform 0.2s ease;
+}
+
+.nav-profile-pic:hover {
+  transform: scale(1.05);
 }
 
 .nav-profile-placeholder {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #444;
   color: #fff;
@@ -91,28 +104,7 @@
   font-weight: bold;
 }
 
-/* Reszponzív finomhangolás */
-@media (max-width: 768px) {
-  .nav-links {
-    gap: 0.8rem;
-  }
-
-  .nav-logo a {
-    font-size: 1.2rem;
-  }
-
-  .logo-icon {
-    font-size: 1.4rem;
-  }
-}
-
-.notification-link {
-  position: relative;
-  font-size: 1.2rem;
-  text-decoration: none;
-  color: white;
-}
-
+/* Badge */
 .nav-badge {
   position: absolute;
   top: -4px;
@@ -122,4 +114,20 @@
   font-size: 0.7rem;
   padding: 2px 6px;
   border-radius: 50%;
+}
+
+/* Reszponzív */
+@media (max-width: 768px) {
+  .nav-center {
+    gap: 1rem;
+  }
+
+  .logo-img {
+    height: 36px;
+  }
+
+  .nav-icon-img {
+    height: 32px;
+    width: 32px;
+  }
 }
