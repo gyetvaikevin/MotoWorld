@@ -1,8 +1,11 @@
 // src/components/events/EventCard.jsx
 import React, { useState } from "react";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { db } from "../../services/firebase";
 import Comments from "../comments/Comments";
 import LikesModal from "./LikesModal";
-import UserNameLink from "../profile/UserNameLink"; 
+import AttendeesModal from "./AttendeesModal"; 
+import UserNameLink from "../profile/UserNameLink";
 
 export default function EventCard({
   event,
@@ -13,6 +16,21 @@ export default function EventCard({
   openRouteInMaps,
 }) {
   const [showLikes, setShowLikes] = useState(false);
+  const [showAttendees, setShowAttendees] = useState(false);
+
+  const handleAttend = async () => {
+    if (!user) return;
+    await updateDoc(doc(db, "events", event.id), {
+      attendees: arrayUnion(user.uid),
+    });
+  };
+
+  const handleUnattend = async () => {
+    if (!user) return;
+    await updateDoc(doc(db, "events", event.id), {
+      attendees: arrayRemove(user.uid),
+    });
+  };
 
   return (
     <div className="card event-card">
@@ -43,10 +61,28 @@ export default function EventCard({
       )}
 
       <div className="event-actions">
+        {/* Like rész */}
         <button onClick={() => onLike(event.id)}>👍</button>
         <span className="likes-count" onClick={() => setShowLikes(true)}>
           {event.likes?.length || 0} ember kedveli
         </span>
+
+        {/* Ott leszek rész */}
+        {user && (
+          <>
+            {event.attendees?.includes(user.uid) ? (
+              <button onClick={handleUnattend}>Mégsem megyek</button>
+            ) : (
+              <button onClick={handleAttend}>Ott leszek</button>
+            )}
+            <span
+              className="attendees-count"
+              onClick={() => setShowAttendees(true)}
+            >
+              {event.attendees?.length || 0} ember lesz ott
+            </span>
+          </>
+        )}
 
         {user?.uid === event.createdByUid && (
           <>
@@ -64,6 +100,13 @@ export default function EventCard({
         <LikesModal
           likes={event.likes || []}
           onClose={() => setShowLikes(false)}
+        />
+      )}
+
+      {showAttendees && (
+        <AttendeesModal
+          attendees={event.attendees || []}
+          onClose={() => setShowAttendees(false)}
         />
       )}
     </div>
