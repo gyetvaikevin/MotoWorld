@@ -66,3 +66,9 @@
   min-height: 0;
   overflow-y: auto;
 }
+
+@media (max-width: 768px) {
+  .chat-toggle {
+    display: none !important;
+  }
+}

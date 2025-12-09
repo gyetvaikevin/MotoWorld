@@ -93,7 +93,6 @@ export default function App() {
                   }
                 />
 
-                {/* 🔧 Debug route a ChatWindow-hoz */}
                 <Route
                   path="/messages"
                   element={
@@ -155,7 +154,11 @@ export default function App() {
 }
 
 // Kis komponens a sidebar pozicionálására
+import { useMediaQuery } from "react-responsive";
+
 function SidebarArea() {
   const { user } = useAuth();
-  return user ? <ChatSidebar /> : null;
+  const isDesktop = useMediaQuery({ minWidth: 769 }); // csak desktopon
+
+  return user && isDesktop ? <ChatSidebar /> : null;
 }

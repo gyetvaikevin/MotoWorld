@@ -6,15 +6,13 @@ import "../../styles/ChatSidebar.css";
 import { startConversation } from "../../hooks/chat/chatUtils";
 import useChatList from "../../hooks/chat/useChatList";
 import useUserSearch from "../../hooks/chat/useUserSearch";
-import {
-  collection,
-  query,
-  onSnapshot,
-  orderBy,
-} from "firebase/firestore";
+import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
 
-export default function ChatSidebar() {
-  const [open, setOpen] = useState(false);
+export default function ChatSidebar({ mobileTrigger = false, open: externalOpen = false, onClose }) {
+  // Desktopon saját state, mobilon külső prop
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = mobileTrigger ? externalOpen : internalOpen;
+
   const [activeConv, setActiveConv] = useState(null);
   const [search, setSearch] = useState("");
   const [unreadChats, setUnreadChats] = useState(0);
@@ -75,10 +73,13 @@ export default function ChatSidebar() {
 
   return (
     <div className={`chat-sidebar ${open ? "open" : ""}`}>
-      <button className="chat-toggle" onClick={() => setOpen(!open)}>
-        💬
-        {unreadChats > 0 && <span className="chat-badge">{unreadChats}</span>}
-      </button>
+      {/* Toggle gomb csak desktopon */}
+      {!mobileTrigger && (
+        <button className="chat-toggle" onClick={() => setInternalOpen(!internalOpen)}>
+          💬
+          {unreadChats > 0 && <span className="chat-badge">{unreadChats}</span>}
+        </button>
+      )}
 
       {open && (
         <div className="chat-content">

@@ -62,20 +62,25 @@
   gap: 1rem;
 }
 
-.logout-btn {
-  background: transparent;
-  border: 2px solid var(--color-secondary);
-  color: var(--color-secondary);
+.logout-btn,
+.nav-right a[href="/login"],
+.nav-right a[href="/register"] {
+  background: #000; /* fekete háttér */
+  border: 2px solid #000; /* fekete keret */
+  color: orange; /* narancssárga betűk */
   border-radius: var(--radius);
   padding: 0.4rem 0.8rem;
   cursor: pointer;
   font-weight: bold;
   transition: var(--transition);
+  text-decoration: none;
 }
 
-.logout-btn:hover {
-  background: var(--color-secondary);
-  color: var(--color-primary);
+.logout-btn:hover,
+.nav-right a[href="/login"]:hover,
+.nav-right a[href="/register"]:hover {
+  background: orange; /* hover: narancssárga háttér */
+  color: #000; /* fekete betűk */
 }
 
 /* Profilkép */
@@ -84,7 +89,7 @@
   height: 40px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #fff;
+  border: 2px solid #000000;
   transition: transform 0.2s ease;
 }
 
@@ -116,6 +121,64 @@
   border-radius: 50%;
 }
 
+/* Tooltip alap + egységes gomb reset */
+.nav-icon {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Mobil böngésző resetek */
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* Minden fókusz/aktív állapot reset – viewport váltáskor se ragadjon */
+.nav-icon:focus,
+.nav-icon:active,
+.nav-icon:focus-visible {
+  background: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Tooltip szöveg */
+.nav-icon::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%) translateY(5px);
+  background: rgba(0,0,0,0.85);
+  color: #ffa500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Hover állapot */
+.nav-icon:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Csak desktop nézetben */
+@media (max-width: 768px) {
+  .nav-icon::after {
+    display: none;
+  }
+}
+
 /* Reszponzív */
 @media (max-width: 768px) {
   .nav-center {
@@ -129,5 +192,39 @@
   .nav-icon-img {
     height: 32px;
     width: 32px;
+  }
+}
+
+/* Desktopon látszik a nav-center, mobilon nem */
+.desktop-only { display: flex; }
+.mobile-only { display: none; }
+
+@media (max-width: 768px) {
+  .desktop-only { display: none; }
+  .mobile-only {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #111;
+    padding: 8px 0;
+    border-top: 1px solid #ffa500;
+    z-index: 1000;
+  }
+  .mobile-only .nav-icon {
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Biztonsági reset mobilra – ha fókusz maradna viewport váltásnál */
+  .mobile-only .nav-icon:focus,
+  .mobile-only .nav-icon:active,
+  .mobile-only .nav-icon:focus-visible {
+    background: none !important;
+    outline: none !important;
+    box-shadow: none !important;
   }
 }

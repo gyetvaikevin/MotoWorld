@@ -35,7 +35,13 @@ button {
   cursor: pointer;
   transition: var(--transition);
 }
-button:hover { background: #e05500; }
+
+/* Hover csak desktopon */
+@media (hover: hover) and (pointer: fine) {
+  button:hover {
+    background: #e05500;
+  }
+}
 
 /* ===== Alap form elemek ===== */
 input, textarea, select {
