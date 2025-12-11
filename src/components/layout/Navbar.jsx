@@ -176,11 +176,32 @@ export default function Navbar() {
           )}
           {!user && (
             <>
-              <NavLink to="/login" className="logout-btn">
-                Bejelentkezés
+              {/* Login ikon */}
+              <NavLink
+                to="/login"
+                className="nav-icon"
+                aria-label="Bejelentkezés"
+                data-label="Belépés"
+              >
+                <img
+                  src="/signin-icon.png"
+                  alt="Login"
+                  className="nav-icon-img"
+                />
               </NavLink>
-              <NavLink to="/register" className="logout-btn">
-                Regisztráció
+
+              {/* Register ikon */}
+              <NavLink
+                to="/register"
+                className="nav-icon"
+                aria-label="Regisztráció"
+                data-label="Regisztráció"
+              >
+                <img
+                  src="/register-icon.png"
+                  alt="Register"
+                  className="nav-icon-img"
+                />
               </NavLink>
             </>
           )}

@@ -1,45 +1,75 @@
+/* ===== Listing kártya link reset – VALÓDI FIX ===== */
+.listing-link,
+.listing-link:link,
+.listing-link:visited,
+.listing-link:hover,
+.listing-link:active {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.listing-link * {
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
 /* ===== Marketplace konténer ===== */
 .marketplace-container {
   padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  font-family: "Inter", sans-serif;
 }
 
 /* ===== Szűrők ===== */
 .filters {
   display: flex;
-  flex-wrap: wrap; /* mobilon törjön sorba */
+  flex-wrap: wrap;
   gap: 0.8rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.2rem;
 }
 
 .filters input,
 .filters select {
   flex: 1 1 150px;
   min-width: 120px;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #2a2a2a;
+  background: #111;
+  color: #eee;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border 0.2s ease, background 0.2s ease;
+}
+
+.filters input:focus,
+.filters select:focus {
+  border-color: var(--color-primary);
+  background: #181818;
+  outline: none;
 }
 
 .filters a {
-  padding: 0.5rem 1rem;
+  padding: 0.55rem 1.1rem;
   background: var(--color-primary);
   color: #fff;
-  border-radius: 4px;
+  border-radius: 6px;
   text-decoration: none;
   font-weight: 600;
-  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  letter-spacing: 0.3px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .filters a:hover {
   background: var(--color-primary-dark);
+  transform: translateY(-1px);
 }
 
 /* ===== Listing kártya ===== */
 .card,
 .listing-card {
-  background: #1a1a1a;
+  background: #141414;
   border-radius: var(--radius);
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
@@ -48,12 +78,19 @@
   text-decoration: none;
   display: flex;
   flex-direction: column;
+  border: 1px solid #1f1f1f;
+  position: relative;
+  overflow: hidden;
 }
 
-.card:hover,
 .listing-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7);
+  border-color: var(--color-primary);
+}
+
+.listing-card:hover img {
+  filter: brightness(1.15);
 }
 
 .card img,
@@ -66,21 +103,58 @@
   display: block;
 }
 
+/* ===== Badge ===== */
+.listing-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--color-primary);
+  color: #000;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ===== Cím és ár ===== */
 .listing-card h3 {
-  margin: 0.5rem 0;
+  margin: 0.4rem 0 0.3rem;
   font-size: 1.1rem;
+  font-weight: 600;
+  color: #f5f5f5;
+  letter-spacing: 0.3px;
+  line-height: 1.3;
 }
 
 .listing-card p {
   margin: 0;
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 1.15rem;
   color: var(--color-primary);
+  letter-spacing: 0.4px;
+}
+
+/* ===== Skeleton loading ===== */
+.skeleton-card {
+  background: #1a1a1a;
+  border-radius: var(--radius);
+  padding: 1rem;
+  height: 300px;
+  animation: pulse 1.4s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { background-color: #1a1a1a; }
+  50% { background-color: #222; }
+  100% { background-color: #1a1a1a; }
 }
 
 /* ===== Listing grid ===== */
 .listing-grid {
-  display: grid !important; /* 🔧 biztosan grid legyen, ne flex */
-  grid-template-columns: 1fr; /* alap: mobilon egy oszlop */
+  display: grid !important;
+  grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 1.5rem;
   width: 100%;
@@ -88,12 +162,12 @@
 
 @media (min-width: 768px) {
   .listing-grid {
-    grid-template-columns: repeat(2, 1fr); /* tableten két oszlop */
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 1200px) {
   .listing-grid {
-    grid-template-columns: repeat(3, 1fr); /* asztalin három oszlop */
+    grid-template-columns: repeat(3, 1fr);
   }
 }

@@ -55,33 +55,6 @@
           brightness(1.2); /* fényesebb narancs hatás */
 }
 
-/* Jobb oldali profil + logout */
-.nav-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logout-btn,
-.nav-right a[href="/login"],
-.nav-right a[href="/register"] {
-  background: #000; /* fekete háttér */
-  border: 2px solid #000; /* fekete keret */
-  color: orange; /* narancssárga betűk */
-  border-radius: var(--radius);
-  padding: 0.4rem 0.8rem;
-  cursor: pointer;
-  font-weight: bold;
-  transition: var(--transition);
-  text-decoration: none;
-}
-
-.logout-btn:hover,
-.nav-right a[href="/login"]:hover,
-.nav-right a[href="/register"]:hover {
-  background: orange; /* hover: narancssárga háttér */
-  color: #000; /* fekete betűk */
-}
 
 /* Profilkép */
 .nav-profile-pic {
@@ -137,6 +110,12 @@
   -webkit-tap-highlight-color: transparent;
   appearance: none;
   -webkit-appearance: none;
+}
+.nav-right .nav-icon {
+  margin-left: 1.2rem;
+}
+.nav-right .nav-profile-pic {
+  margin-left: 1.2rem;
 }
 
 /* Minden fókusz/aktív állapot reset – viewport váltáskor se ragadjon */
@@ -228,3 +207,4 @@
     box-shadow: none !important;
   }
 }
+

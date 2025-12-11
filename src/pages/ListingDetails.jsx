@@ -5,7 +5,8 @@ import { db, storage, auth } from "../services/firebase";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import LoaderWrapper from "../components/common/LoaderWrapper";
-import UserNameLink from "../components/profile/UserNameLink"; // 🔥 új import
+import UserNameLink from "../components/profile/UserNameLink";
+import "../styles/ListingDetails.css";
 
 export default function ListingDetails() {
   const { id } = useParams();
@@ -45,42 +46,61 @@ export default function ListingDetails() {
   };
 
   if (loading) return <LoaderWrapper text="Hirdetés betöltése..." />;
-  if (!listing) return <p style={{ padding: "2rem" }}>Hirdetés nem található.</p>;
+  if (!listing) return <p className="not-found">Hirdetés nem található.</p>;
 
   return (
-    <div className="card listing-details" style={{ padding: "2rem" }}>
-      <h2>{listing.title}</h2>
-      <p><strong>Kategória:</strong> {listing.category}</p>
-      <p><strong>Ár:</strong> {listing.price} Ft</p>
-      <p>{listing.desc}</p>
-      {listing.imageUrl && (
-        <img
-          src={listing.imageUrl}
-          alt={listing.title}
-          style={{ maxWidth: "400px", borderRadius: "6px", marginBottom: "1rem" }}
-        />
-      )}
+    <div className="listing-details-container">
+      <Link to="/marketplace" className="back-link">← Vissza</Link>
 
-      {/* 🔥 Hirdető neve kattintható */}
-      <p>
-        <strong>Hirdető:</strong>{" "}
-        <UserNameLink uid={listing.createdByUid} displayName={listing.authorName} />
-      </p>
-
-      {/* Saját hirdetés esetén szerkesztés/törlés */}
-      {user?.uid === listing.createdByUid && (
-        <div style={{ marginTop: "1rem" }}>
-          <Link to={`/marketplace/edit/${listing.id}`}>
-            <button>Szerkesztés</button>
-          </Link>
-          <button onClick={handleDelete} style={{ marginLeft: "0.5rem" }}>
-            Törlés
-          </button>
+      <div className="listing-details-card">
+        {/* Bal oldal – nagy kép */}
+        <div className="details-image-wrapper">
+          {listing.imageUrl && (
+            <img
+              src={listing.imageUrl}
+              alt={listing.title}
+              className="details-image"
+            />
+          )}
         </div>
-      )}
 
-      <div style={{ marginTop: "1rem" }}>
-        <Link to="/marketplace">← Vissza a Marketplace-re</Link>
+        {/* Jobb oldal – infó panel */}
+        <div className="details-info">
+          {/* Badge (ha van condition) */}
+          {listing.condition && (
+            <span className="details-badge">{listing.condition}</span>
+          )}
+
+          <h2 className="details-title">{listing.title}</h2>
+
+          <p className="details-price">{listing.price} Ft</p>
+
+          <p className="details-category">
+            <strong>Kategória:</strong> {listing.category}
+          </p>
+
+          <p className="details-desc">{listing.desc}</p>
+
+          <p className="details-author">
+            <strong>Hirdető:</strong>{" "}
+            <UserNameLink
+              uid={listing.createdByUid}
+              displayName={listing.authorName}
+            />
+          </p>
+
+          {/* Saját hirdetés esetén szerkesztés/törlés */}
+          {user?.uid === listing.createdByUid && (
+            <div className="details-actions">
+              <Link to={`/marketplace/edit/${listing.id}`}>
+                <button className="btn-edit">Szerkesztés</button>
+              </Link>
+              <button className="btn-delete" onClick={handleDelete}>
+                Törlés
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
